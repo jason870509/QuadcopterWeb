@@ -85,42 +85,42 @@ function createDashboard(){
 		pointerer[i].position.x = -1
 	}
 	////////////////////////////////////////////////////////////////////
-	// var Text2D = THREE_Text.MeshText2D;
-	// var SpriteText2D = THREE_Text.SpriteText2D;
-	// var textAlign = THREE_Text.textAlign;
+	var Text2D = THREE_Text.MeshText2D;
+	var SpriteText2D = THREE_Text.SpriteText2D;
+	var textAlign = THREE_Text.textAlign;
 	var sprites=[],motornumber=[];
   
 
-	// for (i = 0; i < 4; i++) {
-	// 	motornumber[i] = new SpriteText2D("Motor"+(i+1), {
-	// 		align: textAlign.center,
-	// 		font: '60px Monospace',
-	// 		fillStyle: '0x3d59ab',
-	// 		antialias: true
-	// 	});
-	// 	motornumber[i].scale.set(0.005, 0.005, 0.005);
-	// 	motornumber[i].position.set(-0.75,0.15,0);
+	for (i = 0; i < 4; i++) {
+		motornumber[i] = new SpriteText2D("Motor"+(i+1), {
+			align: textAlign.center,
+			font: '60px Monospace',
+			fillStyle: '0x3d59ab',
+			antialias: true
+		});
+		motornumber[i].scale.set(0.005, 0.005, 0.005);
+		motornumber[i].position.set(-0.75,0.15,0);
 
-		// sprite[i] = new SpriteText2D("0", {
-		// 	align: textAlign.center,
-		// 	font: '80px Monospace',
-		// 	fillStyle: '0x3d59ab',
-		// 	antialias: true
-		// });
-		// sprite[i].scale.set(0.005, 0.005, 0.005);
+		sprite[i] = new SpriteText2D("0", {
+			align: textAlign.center,
+			font: '80px Monospace',
+			fillStyle: '0x3d59ab',
+			antialias: true
+		});
+		sprite[i].scale.set(0.005, 0.005, 0.005);
 
-		// sprites[i] = new SpriteText2D("RPM", {
-		// 	align: textAlign.center,
-		// 	font: '80px Monospace',
-		// 	fillStyle: '0x3d59ab',
-		// 	antialias: true
-		// });
-		// sprites[i].scale.set(0.005, 0.005, 0.005);
+		sprites[i] = new SpriteText2D("RPM", {
+			align: textAlign.center,
+			font: '80px Monospace',
+			fillStyle: '0x3d59ab',
+			antialias: true
+		});
+		sprites[i].scale.set(0.005, 0.005, 0.005);
 
-	// 	dashBoard[i].add(sprite[i],sprites[i],motornumber[i])
-	// 	sprite[i].position.y = 1;
-	// 	sprites[i].position.y=0.55;
-	// }
+		dashBoard[i].add(sprite[i],sprites[i],motornumber[i])
+		sprite[i].position.y = 1;
+		sprites[i].position.y=0.55;
+	}
 	var x = window.innerWidth / window.innerHeight;
 	let ControlTex = loader.load('https://i.imgur.com/QnO94NW.png');
 	ControlRange = new THREE.Mesh(new THREE.CircleGeometry(4,30),new THREE.MeshBasicMaterial({

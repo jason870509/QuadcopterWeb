@@ -823,16 +823,16 @@ airplane.children[16].remove(new THREE.AxesHelper (0.5));*/
     }
     angle[0] = 4.9 / 14 * omega0;
     numberRef1=-omega0.toFixed(1);
-    // sprite[0].text = y2.toFixed(2);
+    sprite[0].text = y2.toFixed(2);
     angle[1] = 4.9 / 14 * omega1;
     numberRef2=omega1.toFixed(1);
-    // sprite[1].text =y3.toFixed(2);
+    sprite[1].text =y3.toFixed(2);
     numberRef3=-omega2.toFixed(1);
     angle[2] = 4.9 / 14 * omega2;
-    // sprite[2].text = y4.toFixed(2);
+    sprite[2].text = y4.toFixed(2);
     numberRef4=omega3.toFixed(1);;
     angle[3] = 4.9 / 14 * omega3;
-    // sprite[3].text = y5.toFixed(2);
+    sprite[3].text = y5.toFixed(2);
     for (i = 0; i < 4; i++) {
     angle[i] = Math.clamp(angle[i], 0, 4.9);
     speedRef[i+1]= -angle[i] + 0.86
@@ -858,7 +858,7 @@ function render(){
 }
 function handleKeys () {
   keyboard.update();
-  console.log("keyborad:",keyboard.down)
+  // console.log("keyborad:",keyboard.down)
   const RATIO = 1.0003;
   /////////////////////////////////////////////////////////////
   // for hovering
@@ -987,7 +987,7 @@ function handleKeys () {
 }
 function HUDControler(){
 	const RATIO = 1.0003;
-	console.log(mousepick)
+	// console.log(mousepick)
 	if(ControlPick !== undefined && controlOne == 2 && mousepick == true){
 		let p = ControlPick.position.clone().sub(ControlRange2.position)
 		// for rolling
