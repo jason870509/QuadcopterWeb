@@ -85,42 +85,42 @@ function createDashboard(){
 		pointerer[i].position.x = -1
 	}
 	////////////////////////////////////////////////////////////////////
-	var Text2D = THREE_Text.MeshText2D;
-	var SpriteText2D = THREE_Text.SpriteText2D;
-	var textAlign = THREE_Text.textAlign;
+	// var Text2D = THREE_Text.MeshText2D;
+	// var SpriteText2D = THREE_Text.SpriteText2D;
+	// var textAlign = THREE_Text.textAlign;
 	var sprites=[],motornumber=[];
   
 
-	for (i = 0; i < 4; i++) {
-		motornumber[i] = new SpriteText2D("Motor"+(i+1), {
-			align: textAlign.center,
-			font: '60px Monospace',
-			fillStyle: '0x3d59ab',
-			antialias: true
-		});
-		motornumber[i].scale.set(0.005, 0.005, 0.005);
-		motornumber[i].position.set(-0.75,0.15,0);
+	// for (i = 0; i < 4; i++) {
+	// 	motornumber[i] = new SpriteText2D("Motor"+(i+1), {
+	// 		align: textAlign.center,
+	// 		font: '60px Monospace',
+	// 		fillStyle: '0x3d59ab',
+	// 		antialias: true
+	// 	});
+	// 	motornumber[i].scale.set(0.005, 0.005, 0.005);
+	// 	motornumber[i].position.set(-0.75,0.15,0);
 
-		sprite[i] = new SpriteText2D("0", {
-			align: textAlign.center,
-			font: '80px Monospace',
-			fillStyle: '0x3d59ab',
-			antialias: true
-		});
-		sprite[i].scale.set(0.005, 0.005, 0.005);
+		// sprite[i] = new SpriteText2D("0", {
+		// 	align: textAlign.center,
+		// 	font: '80px Monospace',
+		// 	fillStyle: '0x3d59ab',
+		// 	antialias: true
+		// });
+		// sprite[i].scale.set(0.005, 0.005, 0.005);
 
-		sprites[i] = new SpriteText2D("RPM", {
-			align: textAlign.center,
-			font: '80px Monospace',
-			fillStyle: '0x3d59ab',
-			antialias: true
-		});
-		sprites[i].scale.set(0.005, 0.005, 0.005);
+		// sprites[i] = new SpriteText2D("RPM", {
+		// 	align: textAlign.center,
+		// 	font: '80px Monospace',
+		// 	fillStyle: '0x3d59ab',
+		// 	antialias: true
+		// });
+		// sprites[i].scale.set(0.005, 0.005, 0.005);
 
-		dashBoard[i].add(sprite[i],sprites[i],motornumber[i])
-		sprite[i].position.y = 1;
-		sprites[i].position.y=0.55;
-	}
+	// 	dashBoard[i].add(sprite[i],sprites[i],motornumber[i])
+	// 	sprite[i].position.y = 1;
+	// 	sprites[i].position.y=0.55;
+	// }
 	var x = window.innerWidth / window.innerHeight;
 	let ControlTex = loader.load('https://i.imgur.com/QnO94NW.png');
 	ControlRange = new THREE.Mesh(new THREE.CircleGeometry(4,30),new THREE.MeshBasicMaterial({
@@ -364,33 +364,33 @@ for (i=0;i<4;i++){
   motorCenters2[3].position.set(.40, -.05, .40)
   let  motorshud = [];
 
- for (i=0;i<4;i++){
-  motorCenters2[i].castShadow = true;
-  motorCenters2[i].receiveShadow = true; 
-  var Text2D = THREE_Text.MeshText2D;
-  var SpriteText2D = THREE_Text.SpriteText2D;
-  var textAlign = THREE_Text.textAlign;
+//  for (i=0;i<4;i++){
+//   motorCenters2[i].castShadow = true;
+//   motorCenters2[i].receiveShadow = true; 
+//   // var Text2D = THREE_Text.MeshText2D;
+//   // var SpriteText2D = THREE_Text.SpriteText2D;
+//   // var textAlign = THREE_Text.textAlign;
 
-  motorshud[i] = new SpriteText2D("Motor"+(i+1), {
-  align: textAlign.center,
-  font: '40px Monospace',
-  fillStyle: '0x3d59ab',
-  antialias: true
-  });
-  motorshud[i].scale.set(0.005, 0.005, 0.005);
-  motorCenters2[i].add(motorshud[i]);
-  motorshud[i].position.y+=0.5;
-  motorshud[i].visible=false;
+//   motorshud[i] = new SpriteText2D("Motor"+(i+1), {
+//   align: textAlign.center,
+//   font: '40px Monospace',
+//   fillStyle: '0x3d59ab',
+//   antialias: true
+//   });
+//   motorshud[i].scale.set(0.005, 0.005, 0.005);
+//   motorCenters2[i].add(motorshud[i]);
+//   motorshud[i].position.y+=0.5;
+//   motorshud[i].visible=false;
 
-  }
-  motorshud[0].position.z+=0.3;
-  motorshud[1].position.z-=0.3;
-  motorshud[2].position.z-=0.3;
-  motorshud[3].position.z+=0.3;
-  motorshud[0].position.x-=0.3;
-  motorshud[1].position.x-=0.3;
-  motorshud[2].position.x+=0.3;
-  motorshud[3].position.x+=0.3;
+//   }
+  // motorshud[0].position.z+=0.3;
+  // motorshud[1].position.z-=0.3;
+  // motorshud[2].position.z-=0.3;
+  // motorshud[3].position.z+=0.3;
+  // motorshud[0].position.x-=0.3;
+  // motorshud[1].position.x-=0.3;
+  // motorshud[2].position.x+=0.3;
+  // motorshud[3].position.x+=0.3;
 //////////////////////////////////////////motorLinks
   let motorLinks = [],point=[],SpeedCylinder=[];
   for (i = 0; i < 8; i++) {
@@ -563,15 +563,15 @@ function buildScene() {
   //scene.add (new THREE.AxesHelper (5));  
   let loader = new THREE.TextureLoader();
   loader.crossOrigin = '';
-  var  texture = loader.load('https://img.freepik.com/free-vector/wood-planks-texture-background-parquet-flooring_1048-2145.jpg?size=338&ext=jpg');
-  texture.repeat.set(20, 20);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
+  // var  texture = loader.load('https://img.freepik.com/free-vector/wood-planks-texture-background-parquet-flooring_1048-2145.jpg?size=338&ext=jpg');
+  // texture.repeat.set(20, 20);
+  // texture.wrapS = THREE.RepeatWrapping;
+  // texture.wrapT = THREE.RepeatWrapping;
   let tree = new THREE.Mesh(new THREE.CylinderGeometry(5, 4, 10, 30), new THREE.MeshNormalMaterial() );
   let atree;
   atree = tree.clone();
   atree.position.set(15, 5, 30);
-  let plane = new THREE.Mesh(new THREE.PlaneGeometry(100,100), new THREE.MeshPhongMaterial({map:texture}));
+  let plane = new THREE.Mesh(new THREE.PlaneGeometry(100,100), new THREE.MeshPhongMaterial({}));
   scene.add (plane);
   plane.receiveShadow = true;
   renderer.shadowMap.enabled = true;

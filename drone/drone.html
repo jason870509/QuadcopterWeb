@@ -67,8 +67,8 @@
 
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
-<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="../build/three.min.js"></script>
+<script src="../build/OrbitControls.js"></script>
 <script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
 <script src="https://raw.githack.com/mrdoob/three.js/dev/examples/js/misc/Gyroscope.js"></script>
 <script src="../build/cannon.js"></script>
@@ -82,7 +82,7 @@
 <script src="qcommon.js"></script>
 <script src="qangles.js"></script>
 <script src="qservo.js"></script>
-<script src="https://raw.githack.com/jyunming-chen/tutsplus/master/js/text2D.js"></script>
+<!-- <script src="https://raw.githack.com/jyunming-chen/tutsplus/master/js/text2D.js"></script> -->
 
 <script>
 
@@ -1031,14 +1031,14 @@ if(sloop){
   cylinderRef3=omega2*8;
   cylinderRef4=omega3*8;
 
-  airplane.children[13].children[0].visible=true;
-  airplane.children[14].children[0].visible=true;
-  airplane.children[15].children[0].visible=true;
-  airplane.children[16].children[0].visible=true;
-  airplane.children[25].children[0].visible=true;
-  airplane.children[26].children[0].visible=true;
-  airplane.children[27].children[0].visible=true;
-  airplane.children[28].children[0].visible=true;
+  // airplane.children[13].children[0].visible=true;
+  // airplane.children[14].children[0].visible=true;
+  // airplane.children[15].children[0].visible=true;
+  // airplane.children[16].children[0].visible=true;
+  // airplane.children[25].children[0].visible=true;
+  // airplane.children[26].children[0].visible=true;
+  // airplane.children[27].children[0].visible=true;
+  // airplane.children[28].children[0].visible=true;
  
   airplane.children[25].children[0].scale.y = -3*cylindery1;
   airplane.children[26].children[0].scale.y = 3*cylindery2;
@@ -1053,14 +1053,14 @@ if(sloop){
 }
  else {
 
-  airplane.children[13].children[0].visible=false;
-  airplane.children[14].children[0].visible=false;
-  airplane.children[15].children[0].visible=false;
-  airplane.children[16].children[0].visible=false;
-  airplane.children[25].children[0].visible=false;
-  airplane.children[26].children[0].visible=false;
-  airplane.children[27].children[0].visible=false;
-  airplane.children[28].children[0].visible=false;
+  // airplane.children[13].children[0].visible=false;
+  // airplane.children[14].children[0].visible=false;
+  // airplane.children[15].children[0].visible=false;
+  // airplane.children[16].children[0].visible=false;
+  // airplane.children[25].children[0].visible=false;
+  // airplane.children[26].children[0].visible=false;
+  // airplane.children[27].children[0].visible=false;
+  // airplane.children[28].children[0].visible=false;
 
  }
   /*omega0 = omega  - rRoll - rPitch;
@@ -1103,20 +1103,20 @@ if(sloop){
 
     angle[0] = 4.9 / 14 * omega0;
     numberRef1=-omega0.toFixed(1);
-    sprite[0].text = y2.toFixed(2);
+    // sprite[0].text = y2.toFixed(2);
 
 
     angle[1] = 4.9 / 14 * omega1;
     numberRef2=omega1.toFixed(1);
-    sprite[1].text =y3.toFixed(2);
+    // sprite[1].text =y3.toFixed(2);
 
     numberRef3=-omega2.toFixed(1);
     angle[2] = 4.9 / 14 * omega2;
-    sprite[2].text = y4.toFixed(2);
+    // sprite[2].text = y4.toFixed(2);
 
     numberRef4=omega3.toFixed(1);;
     angle[3] = 4.9 / 14 * omega3;
-    sprite[3].text = y5.toFixed(2);
+    // sprite[3].text = y5.toFixed(2);
 
     for (i = 0; i < 4; i++) {
     angle[i] = Math.clamp(angle[i], 0, 4.9);
