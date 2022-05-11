@@ -1,5 +1,3 @@
-
-
 function speedServo (y1,v1,speedRef) {
   const KP = 150;
   const KD = 20;
@@ -8,16 +6,12 @@ function speedServo (y1,v1,speedRef) {
 }
 
 
-
 function numberServo (y,v,numberRef) {
   const KP = 150;
   const KD = 20;
   let u = KP*(numberRef - y) - KD*v;
   return u;
 }
-
-
-
 
 
 function hoverServo (body, dt) {  // pass dt for integral control
@@ -81,6 +75,7 @@ function rollServo (body, dt) {  // pass dt for integral control
 	return r;
 }
 
+
 function pitchServo (body, dt) {
 	let error = pitchRef - pitchAngle;	
 	
@@ -101,3 +96,37 @@ function pitchServo (body, dt) {
 	//console.log ('r:'+r)
 	return r;
 }
+
+class PIDControllerR2 {
+	constructor(x = 0, y = 0, xref = 0, yref = 0) {
+	  this.x = x;
+	  this.y = y;
+	  this.xref = xref;
+	  this.yref = yref;
+	  this.vx = 0;
+	  this.vy = 0;
+	  this.KP = 150; // 'spring constant'
+	  this.KD = 20; // 'damping'
+	  this.KI = 20;
+	  this.integralX = 0;
+	  this.integralY = 0;
+	}
+	update(dt) {
+	  let errorX = this.xref - this.x;
+	  let errorY = this.yref - this.y;
+	  this.integralX += errorX*dt;
+	  this.integralY += errorY*dt;
+	  let fx = this.KP * errorX + this.KI*this.integralX - this.KD * this.vx;
+	  let fy = this.KP * errorY + this.KI*this.integralY - this.KD * this.vy;
+	  // plant: Euler's method (Newtonian dynamics)
+	  this.vx += fx * dt;
+	  this.x += this.vx * dt
+	  this.vy += fy * dt;
+	  this.y += this.vy * dt
+	  return [this.x, this.y]
+	}
+	setRef(xref, yref) {
+	  this.xref = xref;
+	  this.yref = yref;
+	}
+  }

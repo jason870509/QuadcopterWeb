@@ -1,5 +1,3 @@
-
-
 function speedServo (y1,v1,speedRef) {
   const KP = 150;
   const KD = 20;
@@ -8,14 +6,12 @@ function speedServo (y1,v1,speedRef) {
 }
 
 
-
 function numberServo (y,v,numberRef) {
   const KP = 150;
   const KD = 20;
   let u = KP*(numberRef - y) - KD*v;
   return u;
 }
-
 
 
 function hoverServos (body, dt,yreff) {  // pass dt for integral control
@@ -56,6 +52,7 @@ function yawServo2 (body, dt,yawReff,yawAnglee) {  // pass dt for integral contr
 	return r;
 }
 
+
 function yawServo3 (body, dt,yawReff,yawAnglee) {  // pass dt for integral control
 	let error = yawReff - yawAnglee;	
 	
@@ -76,6 +73,7 @@ function yawServo3 (body, dt,yawReff,yawAnglee) {  // pass dt for integral contr
 	let r = KP*error + KI*yawServo3.integral + KD*diff;
 	return r;
 }
+
 
 function rollServos (body, dt,rollReff,rollAnglee) {  // pass dt for integral control
 
@@ -99,6 +97,7 @@ function rollServos (body, dt,rollReff,rollAnglee) {  // pass dt for integral co
 	return r;
 }
 
+
 function pitchServos (body,dt,pitchReff,pitchAnglee) {
 	let error = pitchReff - pitchAnglee;	
 	
@@ -119,7 +118,6 @@ function pitchServos (body,dt,pitchReff,pitchAnglee) {
 	//console.log ('r:'+r)
 	return r;
 }
-
 
 
 function hoverServo (body, dt) {  // pass dt for integral control
@@ -182,6 +180,7 @@ function rollServo (body, dt) {  // pass dt for integral control
 	//console.log ('r:'+r)
 	return r;
 }
+
 
 function pitchServo (body, dt) {
 	let error = pitchRef - pitchAngle;	

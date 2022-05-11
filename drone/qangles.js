@@ -1,4 +1,3 @@
-
 (function() {
   rotateAlongAxisTo = function(u, axis, w) {
     let angle = u.angleTo(w);
@@ -11,8 +10,9 @@
   }
 })();
 
+
 // rollAngle: try my best to return (-PI,PI)
-function getBodyPitch2 (body) {
+function getBodyPitch (body) {
 	// CANNON.JS
 	var localX, localY;
 	localX = body.vectorToWorldFrame (new CANNON.Vec3(1,0,0) );
@@ -29,8 +29,9 @@ function getBodyPitch2 (body) {
   	return pitchAngle;
 }
 
+
 // rollAngle: try my best to return (-PI,PI)
-function getBodyRoll2 (body) {
+function getBodyRoll (body) {
 	// CANNON.JS
 	var localY, localZ;
     localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );
@@ -47,8 +48,9 @@ function getBodyRoll2 (body) {
   	return rollAngle;
 }
 
+
 // yawAngle: try my best to return [0, 2PI)
-function getBodyYaw2 (body) {
+function getBodyYaw (body) {
 	// CANNON.JS
 	var localY, localZ;
     localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );

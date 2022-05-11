@@ -74,20 +74,22 @@
 
 <script src="../build/three.min.js"></script>
 <script src="../build/OrbitControls.js"></script>
-<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
-<script src="https://raw.githack.com/mrdoob/three.js/dev/examples/js/misc/Gyroscope.js"></script>
 <script src="../build/cannon.js"></script>
 
-<script src="../build/Linesegmentsgeometry.js"></script>
-<script src="../build/Linegeometry.js"></script>
-<script src="../build/Linematerial.js"></script>
-<script src="../build/Linesegments2.js"></script>
-<script src="../build/Line2.js"></script>
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="../tools/KeyboardState.js"></script>
+<script src="../tools/Gyroscope.js"></script>
+<script src="../tools/test2D.js"></script>
+<script src="../tools/Linesegmentsgeometry.js"></script>
+<script src="../tools/Linegeometry.js"></script>
+<script src="../tools/Linematerial.js"></script>
+<script src="../tools/Linesegments2.js"></script>
+<script src="../tools/Line2.js"></script>
+<script src="../tools/jquery-2.1.4.min.js"></script>
+
 <script src="qcommon.js"></script>
 <script src="qangles.js"></script>
 <script src="qservo.js"></script>
-<script src="https://raw.githack.com/jyunming-chen/tutsplus/master/js/text2D.js"></script>
+
 
 <script>
    $('#curveAngle').change ( function() {
@@ -219,7 +221,6 @@ animate();
 
 function init() {
     keyboard = new KeyboardState();
-    console.log("keyborad:",keyboard)
     initThree();
     initCannon();
     var ww1 = $('#Cameras').innerWidth();
