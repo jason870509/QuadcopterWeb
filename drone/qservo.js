@@ -1,4 +1,4 @@
-function speedServo (y1,v1,speedRef) {
+function speedServo (y1, v1, speedRef) {
   const KP = 150;
   const KD = 20;
   let u = KP*(speedRef - y1) - KD*v1;

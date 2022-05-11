@@ -72,6 +72,8 @@
     <script src="tools/Linematerial.js"></script>
     <script src="tools/Linesegments2.js"></script>
     <script src="tools/Line2.js"></script>
+    <script src="tools/createFatLine.js"></script>
+    <script src="tools/HudButton.js"></script>
     <script src="tools/jquery-2.1.4.min.js"></script>
 
     <script src="drone/qcommon.js"></script>
@@ -91,18 +93,18 @@
           SlineAngle = $(this).val();
       });
       $('#CameraFar').change ( function() {
-          camerafar = $(this).val();
+          camera_far = $(this).val();
       });
 
       $('#takeoff').click(function() {
-          takeoff=!takeoff;
+          takeoff = !takeoff;
       });
       $('#land').click(function() {
           land=!land;
       });
 
       $('#CircleMovement').click(function() {
-          ccw=!ccw;
+          circleMove= !circleMove;
       });
       $('#s-line').click(function() {
           sline=!sline;
@@ -120,9 +122,12 @@
 
       var isVisible = true;
       var world, body; 
-      var camera, upCamera, scene, renderer, keyboard, quadcopter, circle, camerafar = -2;
+      var camera, upCamera, scene, renderer, keyboard, quadcopter, circle, camera_far = -2;
+      var upCamera_renderer;
+      var pickables = [];
       var omega, omega0, omega1, omega2, omega3;
       var omegaGain = 1.0, omegaHover;
+      var spotLight;
       const SIZE = 1;
       const PROP_KK = 0.1;
 
@@ -134,8 +139,7 @@
       var yawAngle = 0, yawRef = 0;
       var rollAngle = 0, rollRef = 0;
       var pitchAngle = 0, pitchRef = 0;
-      var gyro;
-      var ccw = false, sline = false, sloop = false;
+      var circleMove = false, sline = false, sloop = false;
       var takeoff = false, land = false, showdirection = false, showplane = false;
       var targetPos;
       var clock = new THREE.Clock();
@@ -145,508 +149,448 @@
         pointer: [],
         controlRange: [],
       }
-      var box, line1, line3, line4, fatline1;
+      var box, line1, line3, line4, fatline = [];
       // HUD 的 PD 控制系統參數
-      var y1, v1, speedRef, y2, v2, numberRef1, y3, v3, numberRef2, y4, v4, numberRef3, y5, v5, numberRef4;
+      var y1, v1, speedRef = [], y2, v2, numberRef1, y3, v3, numberRef2, y4, v4, numberRef3, y5, v5, numberRef4;
       var angley1, anglev1, angleRef1, angley2, anglev2, angleRef2, angley3, anglev3, angleRef3;
 
       var cylindery1, cylindery2, cylindery3, cylindery4; 
-      var showdetail=false;
+      var showdetail = false;
       var mouse = new THREE.Vector2();
       var raycaster = new THREE.Raycaster();
       var SpeedChange=2;
-      var circleAngel=0, SloopAngle=0, curveGeom1, showplane1, showplane2, showplane3;
+      var circleAngel=0, SloopAngle=0, curveGeom1;
 
-      var curveCcw, Sloopcurve, SlineCurve, point1, curveObjectt, geometryCurve, materialCurve;
+      var circle_curve, Sloopcurve, SlineCurve, point1, curveObjectt, geometryCurve, materialCurve;
       var handUp = 0, controlOne = 0, ControlPick1, mousepick = false;
       var nowPitch = false, nowHover = false, nowRoll = false, nowYaw = false;
       var ControlPick;
 
 
       var maxVelocity = 0.4;
-      var orientationcurve = new THREE.Vector3();
+      var curve_orientation = new THREE.Vector3();
       var orientationfull = new THREE.Vector3();
       var orientation = new THREE.Vector3();
       var Time1 = 0,Time2 = 0, Time3 = 0, dtt;
-      var cylinder = [], ready = false, flyover = false
-      var firstlline1 = false, firstlline2 = false, firstlline3 = false;
+      var cylinder = [], ready = false, fly_toggle = false;
+      var first = [true, true, true], firstlline2 = false, firstlline3 = false;
 
       init();
       animate();
 
       function init() {
-          keyboard = new KeyboardState();
-          initThree();
-          initCannon();
-          var ww1 = $('#Cameras').innerWidth();
-          var hh1 = $('#Cameras').innerHeight();
-          var cc1 = document.getElementById('mycanvas');
-          rendererCams = new THREE.WebGLRenderer({
-          canvas: cc1
-          });
-          rendererCams.setSize(ww1, hh1);
-          
-          
+        // =================================== Init ===================================
+        keyboard = new KeyboardState();
+        initThree();
+        initCannon();
+        createDashboard(HUD_object["sprite"], HUD_object["pointer"], HUD_object["controlRange"]);
+
+        var gyro = new THREE.Gyroscope();
+        scene.add (gyro)
+        gyro.add (camera);
+
+        quadcopter = new Quadcopter();
+        spotLight.target = quadcopter.body;
+        quadcopter.body.add (gyro);
+        
+        // =================================== HUD ===================================
+        var upCamera_width = $('#Cameras').innerWidth();
+        var upCamera_height = $('#Cameras').innerHeight();
+        var upCamera_canvas = document.getElementById('mycanvas');
+        upCamera_renderer = new THREE.WebGLRenderer({
+          canvas: upCamera_canvas
+        });
+        upCamera_renderer.setSize(upCamera_width, upCamera_height);
+        upCamera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+
+        // Camera
+        cameraHUD = new THREE.OrthographicCamera(-20, 20, 10, -10, -10, 1000);
+
+
+        // =================================== 陀螺儀設定 ===================================
         var _winDevice = !!navigator.platform.match(/Win32|Win16/);
         console.log(_winDevice + ' ' + navigator.platform);
         if(_winDevice){
-          document.addEventListener('mousedown', hudButtonPick, false);
-          document.addEventListener('mouseup', hudButtonUp, false);
-          document.addEventListener('mousemove', hudButtonMove, false);
+            document.addEventListener('mousedown', hudButtonPick, false);
+            document.addEventListener('mouseup', hudButtonUp, false);
+            document.addEventListener('mousemove', hudButtonMove, false);
         }
         else {
-          document.addEventListener('touchstart', hudButtonPickMobile, false);
-          document.addEventListener('touchend', hudButtonUpMobile, false);
-          document.addEventListener('touchmove', hudButtonMoveMobile, false);
+            document.addEventListener('touchstart', hudButtonPickMobile, false);
+            document.addEventListener('touchend', hudButtonUpMobile, false);
+            document.addEventListener('touchmove', hudButtonMoveMobile, false);
         }
-        /////////////////////////////
+
         // omegaHover: stable hover speed
         omegaHover = Math.sqrt ( body.mass * world.gravity.length()/4/PROP_KK );
-        cameraHUD = new THREE.OrthographicCamera(-20, 20, 10, -10, -10, 1000);
-        cameraHUD.position.z = 100; 
+        pickables.push( quadcopter.body.children[5],
+                        quadcopter.body.children[6],
+                        quadcopter.body.children[7],
+                        quadcopter.body.children[8] );  
+        console.log(pickables);
+        targetPos = new THREE.Vector3(5, 5,-5);
 
-        gyro = new THREE.Gyroscope();
-        scene.add (gyro,upCamera)
-        gyro.add (camera);
-        quadcopter.add (gyro)
-        pickables=[quadcopter.children[9],quadcopter.children[11],quadcopter.children[12],quadcopter.children[10]];
-        targetPos= new THREE.Vector3(5,5,-5);
-        var r=1;
-
-
-        box=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05, 0.1, 20), new THREE.MeshPhongMaterial());
+        box = new THREE.Mesh( new THREE.CylinderGeometry(0.05,0.05, 0.1, 20), 
+                              new THREE.MeshPhongMaterial({ visible: true }));
         scene.add(box);
-        box.visible=false;
-        speedRef=[];
-        sy=[];
+        
+
+        sy = [];
         sy[1]=v1=y2=v2=numberRef1=speedRef[1]=sy[2]=sv2=speedRef[2]=sy[3]=sv3=speedRef[3]=sy[4]=sv4=speedRef[4]=y3=v3=numberRef2=y4=v4=numberRef3=y5=v5=numberRef4=0;
         cylindery1=cylinderv1=cylinderRef1=cylindery2=cylinderv2=cylinderRef2=cylindery3=cylinderv3=cylinderRef3=cylindery4=cylinderv=cylinderRef4=0;
         angley1=anglev1=angleRef1=angley2=anglev2=angleRef2=angley3=anglev3=angleRef3=0;
-        //document.addEventListener('mousedown', onDocumentMouseDown, false)
+        // document.addEventListener('mousedown', onDocumentMouseDown, false)
 
-        //////////////////////////fatline
-        var createFatLineGeometry = function (opt) {
-      
-          opt = opt || {};
-          opt.forPoint = opt.forPoint || function (i, per) {
-              return {
-                  x: i * 5,
-                  y: 0,
-                  z: 0
-              }
-          };
-          opt.ptCount = opt.ptCount === undefined ? 20 : opt.ptCount;
-          opt.colorSolid = opt.colorSolid === undefined ? false : opt.colorSolid;
-          opt.color = opt.color === undefined ? new THREE.Color(0xffffff) : opt.color;
-      
-          // Position and Color Data
-          var positions = [],
-          colors = [],
-          i = 0,
-          point,
-          geo;
-      
-          // for each point
-          while (i < opt.ptCount) {
-      
-              // push point
-              point = opt.forPoint(i, i / opt.ptCount);
-              positions.push(point.x, point.y, point.z);
-      
-              // push color
-              if (!opt.colorSolid) {
-                  opt.color.setHSL(i / opt.ptCount, 1.0, 0.5);
-              }
-              colors.push(opt.color.r, opt.color.g, opt.color.b);
-      
-              i += 1;
-          }
-      
-          // return geo
-          geo = new THREE.LineGeometry();
-          geo.setPositions(positions);
-          geo.setColors(colors);
-          return geo;
-      
-      };
-        fatline1=new THREE.Object3D();
-        fatline2=new THREE.Object3D();
-        line1 = createFatLine({
-          width: 1,
-          geo: createFatLineGeometry({
-            ptCount: 80,
-            colorSolid: true,
-            color: new THREE.Color(0x00ff00),
-            forPoint: function (i, per) {
-              return {
-                x: Math.cos(Math.PI*3*(per))*RADIUS ,
-                y: 0,
-                z: Math.sin(Math.PI*3*(per))*RADIUS
-              }
-            }
-          })
-        });
-        fatline1.add(line1);
-        fatline1.position.y=5;
-        
-          /////////////////////////
-          line3 = createFatLine({
-          width: 1,
-          geo: createFatLineGeometry({
-            ptCount: 80,
-            colorSolid: true,
-            color: new THREE.Color(0xb6d5b9),
-            forPoint: function (i, per) {
-              return {
-                x: i*0.5/4-5,
-                y: 0,
-                z: Math.sin(Math.PI * 2 * (per)) * 2.5
-              }
-            }
-          })
-          });
-          fatline2.add(line3);
-          fatline2.position.y=5;
-          
-
-
-
-        createDashboard(HUD_object["sprite"], HUD_object["pointer"], HUD_object["controlRange"]);
+        // =================================== Fat Line ===================================
+        fatline[0] = new FatLine(0);
+        fatline[1] = new FatLine(1);
 
       }
 
       function onWindowResize() {
-        // renderer resize
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        whRatio = window.innerWidth / window.innerHeight;
-        // perspective camera resize
-        camera1.aspect = whRatio;
-        camera1.updateProjectionMatrix();
-        // orthographic camera resize
-        halfH = 20;
-        halfW = whRatio * halfH;
-        cameraHUD.left = -halfW;
-        cameraHUD.right = halfW;
-        cameraHUD.top = halfH;
-        cameraHUD.bottom = -halfH;
-        cameraHUD.updateProjectionMatrix();
-        dashBoard[0].position.set(-halfW / 2.5, -(halfH - halfW / 10), 0)
-        dashBoard[1].position.set(-halfW / 8, -(halfH - halfW / 10), 0)
-        dashBoard[2].position.set(halfW / 8, -(halfH - halfW / 10), 0)
-        dashBoard[3].position.set(halfW / 2.5, -(halfH - halfW / 10), 0)
+          // renderer resize
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          whRatio = window.innerWidth / window.innerHeight;
+
+          // perspective camera resize
+          camera1.aspect = whRatio;
+          camera1.updateProjectionMatrix();
+          
+          // orthographic camera resize
+          halfH = 20;
+          halfW = whRatio * halfH;
+          cameraHUD.left = -halfW;
+          cameraHUD.right = halfW;
+          cameraHUD.top = halfH;
+          cameraHUD.bottom = -halfH;
+          cameraHUD.updateProjectionMatrix();
+
+          dashBoard[0].position.set(-halfW / 2.5, -(halfH - halfW / 10), 0)
+          dashBoard[1].position.set(-halfW / 8, -(halfH - halfW / 10), 0)
+          dashBoard[2].position.set(halfW / 8, -(halfH - halfW / 10), 0)
+          dashBoard[3].position.set(halfW / 2.5, -(halfH - halfW / 10), 0)
       }
 
 
       function onDocumentMouseDown(event) {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        // find intersections
-        raycaster.setFromCamera(mouse, camera);
-        var intersects = raycaster.intersectObjects(pickables, false);
-        if(intersects.length>0){
-          showdetail=!showdetail;
-          console.log("2");
-        }
+          mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+          mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+          
+          // find intersections
+          raycaster.setFromCamera(mouse, camera);
+          var intersects = raycaster.intersectObjects( pickables );
+          if(intersects.length > 0){
+            showdetail = !showdetail;
+            console.log("2");
+          }
       }
-
-
-
 
 
       function animate() {
+          var dt = clock.getDelta();
+          // console.log(dt)
+          upCamera.position.copy(quadcopter.body.localToWorld(new THREE.Vector3(1, 1, camera_far)));
+          upCamera.lookAt(quadcopter.body.position);
+          upCamera_renderer.render(scene, upCamera);
         
-        rendererCams.render(scene, upCamera);
-        upCamera.position.copy(quadcopter.localToWorld(new THREE.Vector3(0,1.5,camerafar)));
-        upCamera.lookAt(quadcopter.position);
-        var f1 = speedServo(sy[1],v1,speedRef[1]); 
-        dtt = 0.005;
-        v1 += f1*dtt;
-        sy[1] += v1*dtt;
-        var f2 = numberServo(y2,v2,numberRef1); 
-        v2 += f2*dtt;
-        y2 += v2*dtt;
-        cylindery1 =y2*0.05;
-        var f3 = numberServo(y3,v3,numberRef2); 
-        v3 += f3*dtt;
-        y3 += v3*dtt;
-        cylindery2 =y3*0.05;
-        var f4 = numberServo(y4,v4,numberRef3); 
-        v4 += f4*dtt;
-        y4 += v4*dtt;
-        cylindery3 =y4*0.05;
-        var f5 = numberServo(y5,v5,numberRef4); 
-        v5 += f5*dtt;
-        y5 += v5*dtt;
-        cylindery4 =y5*0.05;
-        var f6= speedServo(sy[2],sv2,speedRef[2]); 
-        sv2 += f6*dtt;
-        sy[2] += sv2*dtt;
-          var f7 = speedServo(sy[3],sv3,speedRef[3]); 
-        sv3 += f7*dtt;
-        sy[3] += sv3*dtt;
-          var f8 = speedServo(sy[4],sv4,speedRef[4]); 
-        sv4 += f8*dtt;
-        sy[4]+= sv4*dtt;
-      
-        var f9 = speedServo(angley1,anglev1,angleRef1); 
-        anglev1 += f9*dtt;
-        angley1+= anglev1*dtt;
-
-
-        var f10 = speedServo(angley2,anglev2,angleRef2); 
-        anglev2 += f10*dtt;
-        angley2+= anglev2*dtt;
-
-        var f11 = speedServo(angley3,anglev3,angleRef3); 
-        anglev3 += f11*dtt;
-        angley3+= anglev3*dtt;
-
-
-        spherelight.position.set(body.position.x,body.position.y-0.1,body.position.z);
-        //spherelight.position.y+=1;
-        let dt = clock.getDelta();
-        //console.log(dt);
-        orientation=targetPos.clone().sub(body.position);
-      
-        //  console.log(orientaionLocal);
-
-      ////////////圆平面的变化
-
-      if(takeoff){
-          if(!flyover){
-            yref=5;
-            flyover=true;
-            takeoff=false;
-          }
-
-      }
-
-
-      if(land){
-        if(flyover){
-          yref=0;
-          flyover=false;
-          land=false;
-          }
-      }
-
-      if(body.position.y!=0){
-
-        box.visible=showdirection;
-        
-        if(ccw){
-
-          if(!firstlline1){
-            body.position.set(-RADIUS,5,0);
-            firstlline1=true;
+          // 起飛
+          if(takeoff) {
+            if(!fly_toggle){
+              yref = 5;
+              fly_toggle = true;
+              takeoff = false;
+            }
           }
           
-      if(showplane)
-        showplane1.visible=true;
-      if(!showplane)
-        showplane1.visible=false;
-        showplane2.visible=false;
-        CreateCurve(angley1);
-        scene.add(fatline1);
-        scene.remove(fatline2,showplane2,showplane3);
-        fatline1.rotation.z=angley1;
-        box.position.copy(curveCcw.getPointAt(Time1 % 1));
-        box.position.y+=0.05
-        showplane1.rotation.z=angley1;
-          //console.log(Time1);
-        targetPos=curveCcw.getPointAt(Time1 % 1);
-        orientationcurve=targetPos.clone().sub(body.position).normalize();
-      // orientationcurve=curveCcw.getTangent(Time1 % 1);
-        yref=targetPos.y;
-        rYaw = 0;
-        turning = false;  
-        var localY, localZ;
-        localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );
-        localZ = body.vectorToWorldFrame (new CANNON.Vec3(0,0,1) );
-        var yL = new THREE.Vector3 (localY.x, localY.y, localY.z);
-        var x =new THREE.Vector3(orientationcurve.clone().normalize().x,orientationcurve.clone().normalize().y,orientationcurve.clone().normalize().z);
-        var zL = new THREE.Vector3 (localZ.x, localZ.y, localZ.z);
-        var zW = new THREE.Vector3 (0,0,1);
-        var v = zW.projectOnPlane (yL);
-        var yawAngle =  rotateAlongAxisTo (x, yL, zL);
-        if(yawAngle-0.2>0) {
-        rYaw = -omegaHover*0.1;
-        turning = true;
-        }
-        if(yawAngle+0.2<0){
-        rYaw = omegaHover*0.1;
-        turning = true;
-        }
-        targetPosx=new THREE.Vector3(0,targetPos.y,targetPos.z);
-        orientationx=targetPosx.clone().sub(body.position).normalize();
-        var z=zW.projectOnPlane(orientationx);
-        pitchRef =0;
-        pitching=false;  
-        if(z.z>0){
-        pitchRef = 0.03;
-        pitching=true;
-        }
-        if(z.z<0){
-        pitchRef = -0.03;
-        pitching=true;
-        }
-        if(targetPos.x-body.position.x<=0.5&&targetPos.x-body.position.x>=-0.5){ 
-            if(targetPos.z-body.position.z<=0.5&&targetPos.z-body.position.z>=-0.5){
-            Time1 += 0.003;
-            turning=false;
-            pitchRef = 0;
-            pitching = false; 
-            rollRef = 0;
-            rolling = false;
-            ready=true;
+          // 降落
+          if(land) {
+            if(fly_toggle){
+              yref = 0;
+              fly_toggle = false;
+              land = false;
+            }
           }
-      }  
-      }
 
-      if(sloop){
-        if(!firstlline2){
-          firstlline2=true;
-          body.position.set(-2*RADIUS,5,0);
-        }
-      if(showplane)
-        showplane2.visible=true;
-      if(!showplane)
-        showplane2.visible=false;
+          var f1 = speedServo(sy[1], v1, speedRef[1]); 
+          dtt = 0.005;
+          v1 += f1*dtt;
+          sy[1] += v1*dtt;
 
-        CreateSCurve(angley2);
-        scene.remove(fatline1,showplane1,showplane3,fatline2);
-        //fatline1.rotation.z=SloopAngle;
-        showplane2.rotation.z=angley2;
-        showplane1.visible=false;
-        box.position.copy(Sloopcurve.getPointAt(Time2 % 1));
-        box.position.y+=0.05
-          //console.log(Time1);
-        targetPos=Sloopcurve.getPointAt(Time2 % 1);
-        orientationcurve=targetPos.clone().sub(body.position).normalize();
-      // orientationcurve=curveCcw.getTangent(Time1 % 1);
-        yref=targetPos.y;
-        rYaw = 0;
-        turning = false;  
-        var localY, localZ;
-        localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );
-        localZ = body.vectorToWorldFrame (new CANNON.Vec3(0,0,1) );
-        var yL = new THREE.Vector3 (localY.x, localY.y, localY.z);
-        var x =new THREE.Vector3(orientationcurve.clone().normalize().x,orientationcurve.clone().normalize().y,orientationcurve.clone().normalize().z);
-        var zL = new THREE.Vector3 (localZ.x, localZ.y, localZ.z);
-        var zW = new THREE.Vector3 (0,0,1);
-        var v = zW.projectOnPlane (yL);
-        var yawAngle =  rotateAlongAxisTo (x, yL, zL);
-        if(yawAngle-0.2>0) {
-        rYaw = -omegaHover*0.1;
-        turning = true;
-        }
-        if(yawAngle+0.2<0){
-        rYaw = omegaHover*0.1;
-        turning = true;
-        }
-        targetPosx=new THREE.Vector3(0,targetPos.y,targetPos.z);
-        orientationx=targetPosx.clone().sub(body.position).normalize();
-        var z=zW.projectOnPlane(orientationx);
-        pitchRef =0;
-        pitching=false;  
-        if(z.z>0){
-        pitchRef = 0.025;
-        pitching=true;
-        }
-        if(z.z<0){
-        pitchRef = -0.025;
-        pitching=true;
-        }
-        if(targetPos.x-body.position.x<=0.5&&targetPos.x-body.position.x>=-0.5){ 
-            if(targetPos.z-body.position.z<=0.5&&targetPos.z-body.position.z>=-0.5){
-            Time2 += 0.003;
-            turning=false;
-            pitchRef = 0;
-            pitching = false; 
-            rollRef = 0;
-            rolling = false;
-            ready=true;
-          }
-      }  
-      }
+          var f2 = numberServo(y2,v2,numberRef1); 
+          v2 += f2*dtt;
+          y2 += v2*dtt;
+          cylindery1 =y2*0.05;
         
-      if(sline){
-          if(!firstlline3){
-          firstlline3=true;
-          body.position.set(-2*PI,5,0);
+          var f3 = numberServo(y3,v3,numberRef2); 
+          v3 += f3*dtt;
+          y3 += v3*dtt;
+          cylindery2 =y3*0.05;
+
+          var f4 = numberServo(y4,v4,numberRef3); 
+          v4 += f4*dtt;
+          y4 += v4*dtt;
+          cylindery3 =y4*0.05;
+
+          var f5 = numberServo(y5,v5,numberRef4); 
+          v5 += f5*dtt;
+          y5 += v5*dtt;
+          cylindery4 =y5*0.05;
+          
+          var f6= speedServo(sy[2],sv2,speedRef[2]); 
+          sv2 += f6*dtt;
+          sy[2] += sv2*dtt;
+          
+          var f7 = speedServo(sy[3],sv3,speedRef[3]); 
+          sv3 += f7*dtt;
+          sy[3] += sv3*dtt;
+          
+          var f8 = speedServo(sy[4],sv4,speedRef[4]); 
+          sv4 += f8*dtt;
+          sy[4]+= sv4*dtt;
+        
+          var f9 = speedServo(angley1,anglev1,angleRef1); 
+          anglev1 += f9*dtt;
+          angley1 += anglev1*dtt;
+
+          var f10 = speedServo(angley2,anglev2,angleRef2); 
+          anglev2 += f10*dtt;
+          angley2 += anglev2*dtt;
+
+          var f11 = speedServo(angley3,anglev3,angleRef3); 
+          anglev3 += f11*dtt;
+          angley3 += anglev3*dtt;
+
+
+          // spherelight.position.set(body.position.x,body.position.y-0.1,body.position.z);
+          //spherelight.position.y+=1;
+          
+          //console.log(dt);
+          // orientation=targetPos.clone().sub(body.position);
+      
+        //  console.log(orientaionLocal);
+          // console.log(body.position.y);
+          if(body.position.y != 0) {
+            box.visible = showdirection;
+            console.log(showdirection)
+            // 圓圈循線
+            if(circleMove) {
+              
+              if(first[0]) {
+                
+                sline = false;
+                sloop = false;
+                show_plane[1].visible = false;
+                show_plane[2].visible = false;
+                fatline[1].line.visible = false;
+                body.position.set(-RADIUS, 5, 0);
+                
+                
+                first[0] = false;
+              }
+              CreateCurve(angley1);
+              console.log(angley1)
+              if(showplane)
+                show_plane[0].visible = true;
+              else
+                show_plane[0].visible = false;
+
+              scene.add(fatline[0].line);
+              // circle_curve.rotation.z = angley1;
+              fatline[0].line.rotation.z = angley1;
+              show_plane[0].rotation.z = angley1;
+              box.position.copy(circle_curve.getPointAt(Time1 % 1));
+              box.position.y += 0.05
+
+              targetPos = circle_curve.getPointAt(Time1 % 1);
+              curve_orientation = targetPos.clone().sub(body.position).normalize();
+
+              yref = targetPos.y;
+              rYaw = 0;
+              turning = false;  
+              var localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );
+              var localZ = body.vectorToWorldFrame (new CANNON.Vec3(0,0,1) );
+              var yL = new THREE.Vector3 (localY.x, localY.y, localY.z);
+              var x  = new THREE.Vector3(curve_orientation.clone().normalize().x,curve_orientation.clone().normalize().y,curve_orientation.clone().normalize().z);
+              var zL = new THREE.Vector3 (localZ.x, localZ.y, localZ.z);
+              var zW = new THREE.Vector3 (0,0,1);
+              var v = zW.projectOnPlane (yL);
+              var yawAngle = rotateAlongAxisTo (x, yL, zL);
+
+              if(yawAngle - 0.2 > 0) {
+                rYaw = -omegaHover*0.1;
+                turning = true;
+              }
+              if(yawAngle + 0.2 < 0){
+                rYaw = omegaHover*0.1;
+                turning = true;
+              }
+
+              targetPosx = new THREE.Vector3(0, targetPos.y, targetPos.z);
+              orientationx = targetPosx.clone().sub(body.position).normalize();
+              var z = zW.projectOnPlane(orientationx);
+              pitchRef = 0;
+              pitching = false;
+
+              if(z.z > 0){
+                pitchRef = 0.03;
+                pitching = true;
+              }
+              if(z.z < 0){
+                pitchRef = -0.03;
+                pitching = true;
+              }
+
+              if(targetPos.x - body.position.x <= 0.5 && targetPos.x - body.position.x >= -0.5){ 
+                  if(targetPos.z - body.position.z <= 0.5 && targetPos.z - body.position.z >= -0.5){
+                      Time1 += 0.003;
+                      turning = false;
+                      pitchRef = 0;
+                      pitching = false; 
+                      rollRef = 0;
+                      rolling = false;
+                      ready = true;
+                  }
+              }  
+            }
+            else {
+              first[0] = true;
+            }
+
+            if(sloop){
+              if(!firstlline2){
+                firstlline2=true;
+                body.position.set(-2*RADIUS,5,0);
+              }
+              if(showplane)
+                show_plane[1].visible=true;
+              if(!showplane)
+                show_plane[1].visible=false;
+
+              CreateSCurve(angley2);
+              scene.remove(fatline[0].line,show_plane[0],show_plane[2],fatline[1].line);
+              //fatline[0].line.rotation.z=SloopAngle;
+              show_plane[1].rotation.z=angley2;
+              show_plane[0].visible=false;
+              box.position.copy(Sloopcurve.getPointAt(Time2 % 1));
+              box.position.y+=0.05
+                //console.log(Time1);
+              targetPos=Sloopcurve.getPointAt(Time2 % 1);
+              curve_orientation=targetPos.clone().sub(body.position).normalize();
+              // curve_orientation=circle_curve.getTangent(Time1 % 1);
+              yref=targetPos.y;
+              rYaw = 0;
+              turning = false;  
+              var localY, localZ;
+              localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );
+              localZ = body.vectorToWorldFrame (new CANNON.Vec3(0,0,1) );
+              var yL = new THREE.Vector3 (localY.x, localY.y, localY.z);
+              var x =new THREE.Vector3(curve_orientation.clone().normalize().x,curve_orientation.clone().normalize().y,curve_orientation.clone().normalize().z);
+              var zL = new THREE.Vector3 (localZ.x, localZ.y, localZ.z);
+              var zW = new THREE.Vector3 (0,0,1);
+              var v = zW.projectOnPlane (yL);
+              var yawAngle =  rotateAlongAxisTo (x, yL, zL);
+              if(yawAngle-0.2>0) {
+                rYaw = -omegaHover*0.1;
+                turning = true;
+              }
+              if(yawAngle+0.2<0){
+                rYaw = omegaHover*0.1;
+                turning = true;
+              }
+              targetPosx=new THREE.Vector3(0,targetPos.y,targetPos.z);
+              orientationx=targetPosx.clone().sub(body.position).normalize();
+              var z=zW.projectOnPlane(orientationx);
+              pitchRef =0;
+              pitching=false;  
+              if(z.z>0){
+                pitchRef = 0.025;
+                pitching=true;
+              }
+              if(z.z<0){
+                pitchRef = -0.025;
+                pitching=true;
+              }
+              if(targetPos.x-body.position.x<=0.5&&targetPos.x-body.position.x>=-0.5){ 
+                  if(targetPos.z-body.position.z<=0.5&&targetPos.z-body.position.z>=-0.5){
+                      Time2 += 0.003;
+                      turning=false;
+                      pitchRef = 0;
+                      pitching = false; 
+                      rollRef = 0;
+                      rolling = false;
+                      ready=true;
+                  }
+              }  
+            }
+        
+            if(sline){
+                if(!firstlline3){
+                  firstlline3=true;
+                  body.position.set(-2*PI,5,0);
+                }
+                if(showplane)
+                  show_plane[2].visible=true;
+                if(!showplane)
+                  show_plane[2].visible=false;
+                CreateSline(angley3);
+                scene.add(show_plane[2],fatline[1].line);
+                scene.remove(fatline[0].line,show_plane[1],show_plane[0]);
+                fatline[1].line.rotation.z=angley3;
+                show_plane[2].rotation.z=angley3;
+                box.position.copy(SlineCurve.getPointAt(Time3 % 1));
+                box.position.y+=0.05
+                //console.log(Time1);
+                targetPos=SlineCurve.getPointAt(Time3 % 1);
+                curve_orientation=targetPos.clone().sub(body.position).normalize();
+                // curve_orientation=circle_curve.getTangent(Time1 % 1);
+                yref=targetPos.y;
+                rYaw = 0;
+                turning = false;  
+                var localY, localZ;
+                localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );
+                localZ = body.vectorToWorldFrame (new CANNON.Vec3(0,0,1) );
+                var yL = new THREE.Vector3 (localY.x, localY.y, localY.z);
+                var x =new THREE.Vector3(curve_orientation.clone().normalize().x,curve_orientation.clone().normalize().y,curve_orientation.clone().normalize().z);
+                var zL = new THREE.Vector3 (localZ.x, localZ.y, localZ.z);
+                var zW = new THREE.Vector3 (0,0,1);
+                var v = zW.projectOnPlane (yL);
+                var yawAngle =  rotateAlongAxisTo (x, yL, zL);
+                if(yawAngle-0.2>0) {
+                  rYaw = -omegaHover*0.1;
+                  turning = true;
+                }
+                if(yawAngle+0.2<0){
+                  rYaw = omegaHover*0.1;
+                  turning = true;
+                }
+                targetPosx=new THREE.Vector3(0,targetPos.y,targetPos.z);
+                orientationx=targetPosx.clone().sub(body.position).normalize();
+                var z=zW.projectOnPlane(orientationx);
+                pitchRef =0;
+                pitching=false;  
+                if(z.z>0){
+                  pitchRef = 0.025;
+                  pitching=true;
+                }
+                if(z.z<0){
+                  pitchRef = -0.025;
+                  pitching=true;
+                }
+                if(targetPos.x-body.position.x<=0.5&&targetPos.x-body.position.x>=-0.5){ 
+                    if(targetPos.z-body.position.z<=0.5&&targetPos.z-body.position.z>=-0.5){
+                        Time3 += 0.003;
+                        turning=false;
+                        pitchRef = 0;
+                        pitching = false; 
+                        rollRef = 0;
+                        rolling = false;
+                        ready=true;
+                    }
+                }  
+            }
         }
-        if(showplane)
-        showplane3.visible=true;
-      if(!showplane)
-        showplane3.visible=false;
-        CreateSline(angley3);
-        scene.add(showplane3,fatline2);
-        scene.remove(fatline1,showplane2,showplane1);
-        fatline2.rotation.z=angley3;
-        showplane3.rotation.z=angley3;
-        box.position.copy(SlineCurve.getPointAt(Time3 % 1));
-        box.position.y+=0.05
-          //console.log(Time1);
-        targetPos=SlineCurve.getPointAt(Time3 % 1);
-        orientationcurve=targetPos.clone().sub(body.position).normalize();
-      // orientationcurve=curveCcw.getTangent(Time1 % 1);
-        yref=targetPos.y;
-        rYaw = 0;
-        turning = false;  
-        var localY, localZ;
-        localY = body.vectorToWorldFrame (new CANNON.Vec3(0,1,0) );
-        localZ = body.vectorToWorldFrame (new CANNON.Vec3(0,0,1) );
-        var yL = new THREE.Vector3 (localY.x, localY.y, localY.z);
-        var x =new THREE.Vector3(orientationcurve.clone().normalize().x,orientationcurve.clone().normalize().y,orientationcurve.clone().normalize().z);
-        var zL = new THREE.Vector3 (localZ.x, localZ.y, localZ.z);
-        var zW = new THREE.Vector3 (0,0,1);
-        var v = zW.projectOnPlane (yL);
-        var yawAngle =  rotateAlongAxisTo (x, yL, zL);
-        if(yawAngle-0.2>0) {
-        rYaw = -omegaHover*0.1;
-        turning = true;
-        }
-        if(yawAngle+0.2<0){
-        rYaw = omegaHover*0.1;
-        turning = true;
-        }
-        targetPosx=new THREE.Vector3(0,targetPos.y,targetPos.z);
-        orientationx=targetPosx.clone().sub(body.position).normalize();
-        var z=zW.projectOnPlane(orientationx);
-        pitchRef =0;
-        pitching=false;  
-        if(z.z>0){
-        pitchRef = 0.025;
-        pitching=true;
-        }
-        if(z.z<0){
-        pitchRef = -0.025;
-        pitching=true;
-        }
-        if(targetPos.x-body.position.x<=0.5&&targetPos.x-body.position.x>=-0.5){ 
-            if(targetPos.z-body.position.z<=0.5&&targetPos.z-body.position.z>=-0.5){
-            Time3 += 0.003;
-            turning=false;
-            pitchRef = 0;
-            pitching = false; 
-            rollRef = 0;
-            rolling = false;
-            ready=true;
-          }
-      }  
-      }
 
-
-
-
-
-
-
-
-
-      }
-
-          //console.log(orientaion);
+        //console.log(orientaion);
       
         /*if(controller&&yref==0)
         {
@@ -706,37 +650,37 @@
         cylinderRef2=omega1*8;
         cylinderRef3=omega2*8;
         cylinderRef4=omega3*8;
-        // quadcopter.children[13].children[0].visible=true;
-        // quadcopter.children[14].children[0].visible=true;
-        // quadcopter.children[15].children[0].visible=true;
-        // quadcopter.children[16].children[0].visible=true;
-        // quadcopter.children[25].children[0].visible=true;
-        // quadcopter.children[26].children[0].visible=true;
-        // quadcopter.children[27].children[0].visible=true;
-        // quadcopter.children[28].children[0].visible=true;
+        // quadcopter.body.children[13].children[0].visible=true;
+        // quadcopter.body.children[14].children[0].visible=true;
+        // quadcopter.body.children[15].children[0].visible=true;
+        // quadcopter.body.children[16].children[0].visible=true;
+        // quadcopter.body.children[25].children[0].visible=true;
+        // quadcopter.body.children[26].children[0].visible=true;
+        // quadcopter.body.children[27].children[0].visible=true;
+        // quadcopter.body.children[28].children[0].visible=true;
       
-        quadcopter.children[25].children[0].scale.y = -5*cylindery1;
-        quadcopter.children[26].children[0].scale.y = 5*cylindery2;
-        quadcopter.children[27].children[0].scale.y = -5*cylindery3;
-        quadcopter.children[28].children[0].scale.y = 5*cylindery4;
-      /* quadcopter.children[13].add(new THREE.AxesHelper (0.5));
-      quadcopter.children[14].add(new THREE.AxesHelper (0.5));
-      quadcopter.children[15].add(new THREE.AxesHelper (0.5));
-      quadcopter.children[16].add(new THREE.AxesHelper (0.5));*/
+        quadcopter.body.children[25].children[0].scale.y = -5*cylindery1;
+        quadcopter.body.children[26].children[0].scale.y = 5*cylindery2;
+        quadcopter.body.children[27].children[0].scale.y = -5*cylindery3;
+        quadcopter.body.children[28].children[0].scale.y = 5*cylindery4;
+      /* quadcopter.body.children[13].add(new THREE.AxesHelper (0.5));
+      quadcopter.body.children[14].add(new THREE.AxesHelper (0.5));
+      quadcopter.body.children[15].add(new THREE.AxesHelper (0.5));
+      quadcopter.body.children[16].add(new THREE.AxesHelper (0.5));*/
       }
       else {
-        // quadcopter.children[13].children[0].visible=false;
-        // quadcopter.children[14].children[0].visible=false;
-        // quadcopter.children[15].children[0].visible=false;
-        // quadcopter.children[16].children[0].visible=false;
-        // quadcopter.children[25].children[0].visible=false;
-        // quadcopter.children[26].children[0].visible=false;
-        // quadcopter.children[27].children[0].visible=false;
-        // quadcopter.children[28].children[0].visible=false;
-      /*  quadcopter.children[13].remove(new THREE.AxesHelper (0.5));
-      quadcopter.children[14].remove(new THREE.AxesHelper (0.5));
-      quadcopter.children[15].remove(new THREE.AxesHelper (0.5));
-      quadcopter.children[16].remove(new THREE.AxesHelper (0.5));*/
+        // quadcopter.body.children[13].children[0].visible=false;
+        // quadcopter.body.children[14].children[0].visible=false;
+        // quadcopter.body.children[15].children[0].visible=false;
+        // quadcopter.body.children[16].children[0].visible=false;
+        // quadcopter.body.children[25].children[0].visible=false;
+        // quadcopter.body.children[26].children[0].visible=false;
+        // quadcopter.body.children[27].children[0].visible=false;
+        // quadcopter.body.children[28].children[0].visible=false;
+      /*  quadcopter.body.children[13].remove(new THREE.AxesHelper (0.5));
+      quadcopter.body.children[14].remove(new THREE.AxesHelper (0.5));
+      quadcopter.body.children[15].remove(new THREE.AxesHelper (0.5));
+      quadcopter.body.children[16].remove(new THREE.AxesHelper (0.5));*/
       }
         /*omega0 = omega  - rRoll - rPitch;
         omega1 = omega  - rRoll + rPitch;
@@ -790,15 +734,15 @@
           handleKeys();
           HUDControler();
         updatePhysics();
-        // render propeller in quadcopter
-      // console.log(quadcopter.children[25].children[0].mesh.parameters)
-        quadcopter.children[25].rotation.z += 2.5*omega0*dt;//motor1
-        quadcopter.children[26].rotation.z -= 2.5*omega1*dt;//motor2
-        quadcopter.children[27].rotation.z += 2.5*omega2*dt;//motor3
-        quadcopter.children[28].rotation.z -= 2.5*omega3*dt;//motor4
+        // render propeller in quadcopter.body
+      // console.log(quadcopter.body.children[25].children[0].mesh.parameters)
+        quadcopter.body.children[25].rotation.z += 2.5*omega0*dt;//motor1
+        quadcopter.body.children[26].rotation.z -= 2.5*omega1*dt;//motor2
+        quadcopter.body.children[27].rotation.z += 2.5*omega2*dt;//motor3
+        quadcopter.body.children[28].rotation.z -= 2.5*omega3*dt;//motor4
       }
       function render(){
-        camera.lookAt(quadcopter.position);
+        camera.lookAt(quadcopter.body.position);
         renderer.clear(true);
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
@@ -933,136 +877,12 @@
           $('#gain').val (omegaGain);
         $('#yreftext').val (yref.toFixed(2));
       }
-
-      function HUDControler(){
-        const RATIO = 1.0003;
-        // console.log(mousepick)
-        if(ControlPick !== undefined && controlOne == 2 && mousepick == true){
-          let p = ControlPick.position.clone().sub(HUD_object["controlRange"][1].children[0].position)
-          // for rolling
-          if(Math.abs(p.x) > Math.abs(p.y)){
-            if(p.x > 0){				
-              $('#rollLeft').css ("background-color",  'yellow');
-              rollRef = 0.1;
-            }
-            if(p.x < 0){
-              $('#rollRight').css ("background-color",  'yellow');
-              rollRef = -0.1;
-            }
-            handUp = 1;
-            nowRoll = true;
-          }
-          //for pitching
-          else if(Math.abs(p.x) < Math.abs(p.y)){
-            if(p.y > 0){				
-              $('#pitchFore').css ("background-color",  'yellow');
-              pitchRef = 0.1;
-            }
-            if(p.y < 0){
-              $('#pitchAft').css ("background-color",  'yellow');
-              pitchRef = -0.1;
-            }
-            nowPitch = true;
-            handUp = 2;
-          }
-        }
-
-        else if(ControlPick !== undefined && controlOne == 1 && mousepick == true){
-          let p = ControlPick.position.clone().sub(HUD_object["controlRange"][0].children[0].position)
-          // for yawing
-          if(Math.abs(p.x) > Math.abs(p.y)){
-            if(p.x > 0){				
-              $('#ccwTurn').css ("background-color",  'yellow');
-              rYaw = -omegaHover*0.1;
-            }
-            if(p.x < 0){
-              $('#cwTurn').css ("background-color",  'yellow');
-              rYaw = omegaHover*0.1;
-            }
-            nowYaw = true;
-            handUp = 3;
-            turning = true;
-          }
-          // for hovering
-          else if(Math.abs(p.x) < Math.abs(p.y)){
-            if(p.y > 0){				
-              $('#thrustUp').css ("background-color",  'red');
-              omegaGain *= RATIO;
-            }
-            if(p.y < 0){
-              $('#thrustDo').css ("background-color",  'yellow');
-              omegaGain /= RATIO;
-            }
-            nowHover = true;
-            handUp = 4;
-          }
-        }
-        /*if(nowRoll == true && handUp != 1){
-            $('#rollLeft').css ("background-color",  'white');
-            $('#rollRight').css ("background-color",  'white');
-            rollRef = 0;
-            rolling = false;	
-        }
-        if(nowPitch == true && handUp != 2){
-            $('#pitchAft').css ("background-color",  'white');
-            $('#pitchFore').css ("background-color",  'white');
-            pitchRef = 0;
-            pitching = false;		
-        }
-        if(nowYaw == true && handUp != 3){
-            $('#ccwTurn').css ("background-color",  'white');
-            $('#cwTurn').css ("background-color",  'white');
-            rYaw = 0;
-            turning = false;
-            yawRef = getBodyYaw2(body);
-        }
-        if(nowHover == true && handUp != 4){
-            $('#thrustUp').css ("background-color",  'white');
-            $('#thrustDo').css ("background-color",  'white');
-            yref = body.position.y;
-            omegaGain = 1;
-        }
-        */
-        if(handUp == 1 && mousepick ==false){
-            $('#rollLeft').css ("background-color",  'white');
-            $('#rollRight').css ("background-color",  'white');
-            rollRef = 0;
-            rolling = false;
-            handUp = 0;
-        }
-        else if(handUp == 2 && mousepick ==false){
-            $('#pitchAft').css ("background-color",  'white');
-            $('#pitchFore').css ("background-color",  'white');
-            pitchRef = 0;
-            pitching = false;	
-            handUp = 0;
-        }
-        else if(handUp == 3 && mousepick ==false){
-            console.log("3")
-            $('#ccwTurn').css ("background-color",  'white');
-            $('#cwTurn').css ("background-color",  'white');
-            $('#cwTurn').css ("background-color",  'white');
-            rYaw = 0;
-            turning = false;
-            yawRef = getBodyYaw(body);
-            if((yawRef/Math.PI*180).toFixed(2)==360)yawRef=0;
-            handUp = 0;
-        }
-        else if(handUp == 4 && mousepick ==false){
-            $('#thrustUp').css ("background-color",  'white');
-            $('#thrustDo').css ("background-color",  'white');
-            yref = body.position.y;
-            omegaGain = 1;
-            handUp = 0;
-        }
-
-      }
       function updatePhysics() {
         var timeStep=1/48;
         world.step(timeStep);
         // Copy coordinates from Cannon.js to Three.js
-        quadcopter.position.copy(body.position);
-        quadcopter.quaternion.copy(body.quaternion); 
+        quadcopter.body.position.copy(body.position);
+        quadcopter.body.quaternion.copy(body.quaternion); 
         yawAngle = getBodyYaw(body);
       if((yawAngle/Math.PI*180).toFixed(2)==360)yawAngle=0;
         rollAngle = getBodyRoll(body);
@@ -1075,145 +895,6 @@
           [omega0:${omega0.toFixed(3)}] : [omega1: ${omega1.toFixed(3)} ] [omega2: ${omega2.toFixed(3)} ] [omega3: ${omega3.toFixed(3)} ]         `);  */
       }
 
-      function hudButtonPickMobile(event) {
-        mousepick = true;
-        let ndcX = (event.changedTouches[0].clientX / window.innerWidth) * 2 - 1;
-        let ndcY = -(event.changedTouches[0].clientY / window.innerHeight) * 2 + 1;
-
-        let halfW = cameraHUD.right;
-        let halfH = cameraHUD.top;
-        let xx = ndcX * halfW;
-        let yy = ndcY * halfH;
-
-        let buttonCenter = new THREE.Vector2 (HUD_object["controlRange"][0].children[0].position.x, HUD_object["controlRange"][0].children[0].position.y);
-        let buttonCenter2 = new THREE.Vector2 (HUD_object["controlRange"][1].children[0].position.x, HUD_object["controlRange"][1].children[0].position.y);
-        let mouse = new THREE.Vector2 (xx, yy);
-        if (mouse.distanceTo (buttonCenter) < 2.9){
-          ControlPick = new THREE.Mesh(new THREE.RingGeometry(0.8,1,30),new THREE.MeshBasicMaterial({color: 0x00ff00}));
-          ControlPick.position.set(mouse.x,mouse.y,0);
-          sceneHUD.add(ControlPick);
-          controlOne = 1;
-        }
-        if (mouse.distanceTo (buttonCenter2) < 2.9){
-          ControlPick = new THREE.Mesh(new THREE.RingGeometry(0.8,1,30),new THREE.MeshBasicMaterial({color: 0x00ff00}));
-          ControlPick.position.set(mouse.x,mouse.y,0);
-          sceneHUD.add(ControlPick);
-          controlOne = 2;
-        }
-        
-      }
-
-      function hudButtonUpMobile(event) {
-        if(ControlPick !== undefined){
-          sceneHUD.remove(ControlPick);
-          ControlPick = undefined;
-          mousepick = false;
-        }
-      }
-
-      function hudButtonMoveMobile(event) {
-        if(ControlPick !== undefined){
-          let ndcX = (event.changedTouches[0].clientX / window.innerWidth) * 2 - 1;
-          let ndcY = -(event.changedTouches[0].clientY / window.innerHeight) * 2 + 1;
-
-          let halfW = cameraHUD.right;
-          let halfH = cameraHUD.top;
-          let xx = ndcX * halfW;
-          let yy = ndcY * halfH;
-
-          let buttonCenter = new THREE.Vector2 (HUD_object["controlRange"][0].children[0].position.x, HUD_object["controlRange"][0].children[0].position.y);
-          let buttonCenter2 = new THREE.Vector2 (HUD_object["controlRange"][1].children[0].position.x, HUD_object["controlRange"][1].children[0].position.y);
-          let mouse = new THREE.Vector2 (xx, yy);
-          if (mouse.distanceTo (buttonCenter) < 2.9){
-            ControlPick.position.set(mouse.x,mouse.y,0);
-            controlOne = 1
-          }	
-          else if(mouse.distanceTo (buttonCenter2) < 2.9){
-            ControlPick.position.set(mouse.x,mouse.y,0);
-            controlOne = 2
-          }
-          else {
-            if(controlOne == 1){
-              let fix = mouse.clone().sub(buttonCenter).setLength(2.9).add(buttonCenter);
-              ControlPick.position.set(fix.x,fix.y,0);			
-            }
-            if(controlOne == 2){
-              let fix = mouse.clone().sub(buttonCenter2).setLength(2.9).add(buttonCenter2);
-              ControlPick.position.set(fix.x,fix.y,0);			
-            }
-          }
-        }
-      }
-
-      function hudButtonPick(event) {
-        mousepick = true;
-        let ndcX = (event.clientX / window.innerWidth) * 2 - 1;
-        let ndcY = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        let halfW = cameraHUD.right;
-        let halfH = cameraHUD.top;
-        let xx = ndcX * halfW;
-        let yy = ndcY * halfH;
-
-        let buttonCenter = new THREE.Vector2 (HUD_object["controlRange"][0].children[0].position.x, HUD_object["controlRange"][0].children[0].position.y);
-        let buttonCenter2 = new THREE.Vector2 (HUD_object["controlRange"][1].children[0].position.x, HUD_object["controlRange"][1].children[0].position.y);
-        let mouse = new THREE.Vector2 (xx, yy);
-        if (mouse.distanceTo (buttonCenter) < 2.9){
-          ControlPick = new THREE.Mesh(new THREE.RingGeometry(0.8,1,30),new THREE.MeshBasicMaterial({color: 0x00ff00}));
-          ControlPick.position.set(mouse.x,mouse.y,0);
-          sceneHUD.add(ControlPick);
-          controlOne = 1;
-        }
-        if(mouse.distanceTo (buttonCenter2) < 2.9){
-          ControlPick = new THREE.Mesh(new THREE.RingGeometry(0.8,1,30),new THREE.MeshBasicMaterial({color: 0x00ff00}));
-          ControlPick.position.set(mouse.x,mouse.y,0);
-          sceneHUD.add(ControlPick);
-          controlOne = 2;
-        }
-      }
-
-      function hudButtonUp(event) {
-        if(ControlPick !== undefined){
-          sceneHUD.remove(ControlPick);
-          ControlPick = undefined;
-          mousepick = false;
-        }
-      }
-
-      function hudButtonMove(event) {
-        if(ControlPick !== undefined){
-          let ndcX = (event.clientX / window.innerWidth) * 2 - 1;
-          let ndcY = -(event.clientY / window.innerHeight) * 2 + 1;
-
-          let halfW = cameraHUD.right;
-          let halfH = cameraHUD.top;
-          let xx = ndcX * halfW;
-          let yy = ndcY * halfH;
-
-          let buttonCenter = new THREE.Vector2 (HUD_object["controlRange"][0].children[0].position.x, HUD_object["controlRange"][0].children[0].position.y);
-          let buttonCenter2 = new THREE.Vector2 (HUD_object["controlRange"][1].children[0].position.x, HUD_object["controlRange"][1].children[0].position.y);
-          let mouse = new THREE.Vector2 (xx, yy);
-          if (mouse.distanceTo (buttonCenter) < 2.9){
-            ControlPick.position.set(mouse.x,mouse.y,0);
-            controlOne = 1
-          }	
-          else if(mouse.distanceTo (buttonCenter2) < 2.9){
-            ControlPick.position.set(mouse.x,mouse.y,0);
-            controlOne = 2
-          }
-          else {
-            if(controlOne == 1){
-              let fix = mouse.clone().sub(buttonCenter).setLength(2.9).add(buttonCenter);
-              ControlPick.position.set(fix.x,fix.y,0);			
-            }
-            if(controlOne == 2){
-              let fix = mouse.clone().sub(buttonCenter2).setLength(2.9).add(buttonCenter2);
-              ControlPick.position.set(fix.x,fix.y,0);			
-            }
-          }
-        }
-      }
-      
     </script>
   </body>
 </html>
