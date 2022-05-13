@@ -1,24 +1,20 @@
-
-var show_plane = [];
-var circles = [], circle_curve, Sloopcurve, SlineCurve;
-var spherelight;
-var RADIUS = 2, PI = 2.5;
-var curve, curve1;
+var circles = [];
+const RADIUS = 2, PI = 2.5;
 
 var params1 = { // Circle
-  P0x: 0-RADIUS, P0y: 0 , P0z:0,
-  P1x: -0.5*RADIUS*Math.sqrt(2), P1y: 0 , P1z:RADIUS*0.5*Math.sqrt(2),
-  P2x: 0, P2y: 0, P2z:RADIUS,
-  P3x: 0.5*RADIUS*Math.sqrt(2), P3y: 0, P3z:RADIUS*0.5*Math.sqrt(2),
-  P4x: 2*RADIUS-RADIUS, P4y: 0, P4z:0,
-  P5x: 0.5*RADIUS*Math.sqrt(2), P5y: 0 ,P5z:-RADIUS*0.5*Math.sqrt(2),
-  P6x: 0, P6y: 0,P6z:-RADIUS,
-  P7x: -0.5*RADIUS*Math.sqrt(2), P7y: 0,P7z:-RADIUS*0.5*Math.sqrt(2),      
-  steps: 50,
-  close:true
+    P0x: 0-RADIUS, P0y: 0 , P0z:0,
+    P1x: -0.5*RADIUS*Math.sqrt(2), P1y: 0 , P1z:RADIUS*0.5*Math.sqrt(2),
+    P2x: 0, P2y: 0, P2z:RADIUS,
+    P3x: 0.5*RADIUS*Math.sqrt(2), P3y: 0, P3z:RADIUS*0.5*Math.sqrt(2),
+    P4x: 2*RADIUS-RADIUS, P4y: 0, P4z:0,
+    P5x: 0.5*RADIUS*Math.sqrt(2), P5y: 0 ,P5z:-RADIUS*0.5*Math.sqrt(2),
+    P6x: 0, P6y: 0,P6z:-RADIUS,
+    P7x: -0.5*RADIUS*Math.sqrt(2), P7y: 0,P7z:-RADIUS*0.5*Math.sqrt(2),      
+    steps: 50,
+    close: true
 };
 
-var params3 = {
+var params2 = { // S Curve
   P0x: -2*PI, P0y:0 ,P0z:0,
   P1x: -1.5*PI, P1y: 0,P1z: -2.5*Math.sin((-1.5*PI)*Math.PI/5),
   P2x: -PI, P2y: 0,P2z: PI,
@@ -29,33 +25,36 @@ var params3 = {
   P7x: 1.5*PI, P7y: 0,P7z:-2.5*Math.sin(0.2*Math.PI*(1.5*PI)),
   P8x: 2*PI, P8y: 0,P8z:0, 
   steps: 50, 
-  close:false
+  close: false
 };
+
+var params3 = {
+  P0x: -2*RADIUS, P0y:0 ,P0z:0,
+  P1x:-0.5*RADIUS*Math.sqrt(2)-RADIUS, P1y: 0,P1z: 0.5*RADIUS*Math.sqrt(2),
+  P2x:  -RADIUS, P2y: 0,P2z: RADIUS,
+  P3x:  0.5*RADIUS*Math.sqrt(2)-RADIUS, P3y: 0,P3z:0.5*RADIUS*Math.sqrt(2),
+  P4x: 0, P4y: 0 ,P4z:0,
+  P5x: -0.5*RADIUS*Math.sqrt(2)+RADIUS, P5y: 0,P5z:-0.5*RADIUS*Math.sqrt(2),
+  P6x: RADIUS, P6y: 0,P6z: -RADIUS,   
+  P7x: 0.5*RADIUS*Math.sqrt(2)+RADIUS, P7y: 0,P7z: -0.5*RADIUS*Math.sqrt(2),      
+  P8x: 2*RADIUS , P8y:0 ,P8z:0,
+  P9x: 0.5*RADIUS*Math.sqrt(2)+RADIUS, P9y: 0,P9z: 0.5*RADIUS*Math.sqrt(2),
+  P10x: RADIUS, P10y: 0,P10z:RADIUS,
+  P11x: -0.5*RADIUS*Math.sqrt(2)+RADIUS, P11y: 0,P11z:0.5*RADIUS*Math.sqrt(2),
+  P12x: 0, P12y: 0 ,P12z:0,
+  P13x: 0.5*RADIUS*Math.sqrt(2)-RADIUS, P13y: 0,P13z:-0.5*RADIUS*Math.sqrt(2),
+  P14x: -RADIUS, P14y: 0,P14z:-RADIUS,  
+  P15x: -0.5*RADIUS*Math.sqrt(2)-RADIUS, P15y: 0,P15z:-0.5*RADIUS*Math.sqrt(2),   
+  steps: 50,
+  close:true
+};  
+
 
 ( function( ) {
-      Math.clamp = function(val,min,max) {
-          return Math.min(Math.max(val,min),max);
+      Math.clamp = function(val, min, max) {
+          return Math.min(Math.max(val, min), max);
       } 
 } )();
-
-
-var createFatLine = function (opt) {
- 
-    opt = opt || {};
-    opt.width = opt.width || 5;
- 
-    // LINE MATERIAL
-    var matLine = new THREE.LineMaterial({
-            linewidth: opt.width, // in pixels
-            vertexColors: THREE.VertexColors
-        });
-    matLine.resolution.set(320, 240);
- 
-    var line = new THREE.Line2(opt.geo, matLine);
- 
-    return line;
- 
-};
 
 
 function createDashboard(sprite, pointer, controlRange) { // 儀錶盤
@@ -262,9 +261,24 @@ function createDashboard(sprite, pointer, controlRange) { // 儀錶盤
 
 }
 
+
 class Quadcopter {
   constructor() {
     this.body = this.buildDrone();
+    // Follow Line 參數
+    this.dt = 0;
+    this.curve_type = -1;
+    this.target_position = new THREE.Vector3(5, 5,-5);
+    this.current_curve;
+    this.curveObject;
+    this.target_point;
+
+    this.fatline = [];
+    this.show_plane = [];
+
+    this.showTargetPoint = false;
+    this.showPlane = false;
+    this.curve_first = true;
   }
 
   buildDrone() {
@@ -564,8 +578,134 @@ class Quadcopter {
 
       return quadcopter;
   }
-}
 
+  flyWithYaw() { // Yaw: Y 軸旋轉( 左右轉 )
+    // 方向向量
+    var curve_orientation = this.target_position.clone().sub(body.position).normalize();
+    
+    // CANNON.JS
+    var localY , localZ;
+    localY= body.vectorToWorldFrame ( new CANNON.Vec3(0, 1, 0) );
+    localZ = body.vectorToWorldFrame ( new CANNON.Vec3(0, 0, 1) );
+
+    // THREE.JS
+    var yL = new THREE.Vector3 (localY.x, localY.y, localY.z);
+    var zL = new THREE.Vector3 (localZ.x, localZ.y, localZ.z);
+    var yawAngle = rotateAlongAxisTo (curve_orientation, yL, zL);
+
+    if (yawAngle > Math.PI*2)
+		    yawAngle %= Math.PI*2;
+	  if(yawAngle == Math.PI*2) 
+        yawAngle=0;
+
+    if(yawAngle > 0) {
+      rYaw = -omegaHover*0.1;
+      turning = true;
+    }
+    if(yawAngle < 0){
+      rYaw = omegaHover*0.1;
+      turning = true;
+    }
+
+  }
+
+  flyWithPitch() { // Pitch: X 軸旋轉( 前後 )
+      var z_world = new THREE.Vector3 (0,0,1);
+      var target_position_x = new THREE.Vector3(0, this.target_position.y, this.target_position.z);
+
+      var orientation_x = target_position_x.clone().sub(body.position).normalize();
+      var z = z_world.projectOnPlane(orientation_x);
+
+      if(z.z > 0){
+        pitchRef = 0.03;
+        pitching = true;
+      }
+      if(z.z < 0){
+        pitchRef = -0.03;
+        pitching = true;
+      }
+
+  }
+
+  follow_line() {
+      
+      if(body.position.y != 0 && this.curve_type != -1) {
+          this.target_point.visible = this.showTargetPoint;
+
+          if (this.curve_first) {
+              // clear scene
+              this.showPlane = false;
+              scene.remove(this.fatline[0].line);
+              scene.remove(this.fatline[1].line);
+              scene.remove(quadcopter.curveObject);
+              
+              // init quadcopter
+              quadcopter.dt = 0
+              turning=false;
+              pitchRef = 0;
+              pitching = false; 
+              rollRef = 0;
+              rolling = false;
+              
+              if (this.curve_type != 2){
+                  this.fatline[this.curve_type].line.visible = true;
+                  scene.add(this.fatline[this.curve_type].line);
+              }
+              
+              if (this.curve_type == 0) body.position.set(-RADIUS, 5, 0);
+              if (this.curve_type == 1) body.position.set(-2*PI, 5, 0);
+              if (this.curve_type == 2) body.position.set(-2*RADIUS, 5, 0);
+              this.curve_first = false;
+          }
+
+          switch(this.curve_type){
+              case 0:         
+                  this.current_curve = CreateCurve(angleY[0], this.curve_type, false);
+                  this.fatline[this.curve_type].line.rotation.z = angleY[0];
+                  break;
+              case 1:
+                  this.current_curve = CreateCurve(angleY[2], this.curve_type, false);
+                  this.fatline[this.curve_type].line.rotation.z = angleY[2];
+                  break;
+              case 2: 
+                  this.current_curve = CreateCurve(angleY[1], this.curve_type, true);
+                  break;
+              default:
+                  break;
+          }
+          
+          if (this.showPlane) {
+              this.show_plane[this.curve_type].visible = true;
+              if (this.curve_type == 1)
+                this.show_plane[this.curve_type].rotation.z = angleY[2];
+              else if (this.curve_type == 2)
+                this.show_plane[this.curve_type].rotation.z = angleY[1];
+              else
+                this.show_plane[this.curve_type].rotation.z = angleY[0];
+          }
+          else {
+              for(let i in this.show_plane){
+                  this.show_plane[i].visible = false;
+              }
+          }
+
+          this.target_point.position.copy(this.current_curve.getPointAt(quadcopter.dt % 1));   
+          quadcopter.target_position = this.current_curve.getPointAt(quadcopter.dt % 1);
+          yref = quadcopter.target_position.y;
+
+          quadcopter.flyWithYaw();
+          quadcopter.flyWithPitch();
+
+          var distance = Math.sqrt( Math.pow( quadcopter.target_position.x - body.position.x, 2) + 
+                                    Math.pow(quadcopter.target_position.z - body.position.z, 2 ))
+
+          if (distance <= 0.5) {
+              quadcopter.dt += 0.003;
+          } 
+      }
+  }   
+
+}
 
 
 function buildScene() {
@@ -598,46 +738,26 @@ function buildScene() {
 	parking.rotation.x=-Math.PI/2;
 
   // =================================== 循線時的輔助面 ===================================
-  show_plane[0] = new THREE.Object3D();
-  var plane2 = new THREE.Mesh( new THREE.PlaneGeometry(8,8), 
-                               new THREE.MeshBasicMaterial({ color:0xff0000,
-                                                             side:THREE.DoubleSide,  
-                                                             transparent: true,
-                                                             opacity: 0.2,
-                                                             visible: true }));
-  plane2.rotation.x = Math.PI/2;
-  show_plane[0].position.y = 5;
-  show_plane[0].add (plane2);
-  show_plane[0].visible = false
-  // scene.add(showplane1)
+  let width = [8, 10, 12];
+  let height = [8, 6, 6];
+  for(var i = 0; i < 3; i ++) {
+      buildShowPlane(i, width[i], height[i]);
+      scene.add(quadcopter.show_plane[i]);
+  }
   
-  show_plane[1] = new THREE.Object3D();
-  var plane3 = new THREE.Mesh( new THREE.PlaneGeometry(10,6), 
-                               new THREE.MeshBasicMaterial({ color:0xff0000, 
-                                                             side:THREE.DoubleSide,  
-                                                             transparent: true,
-                                                             opacity: 0.2,
-                                                             visible: true }));
-  plane3.rotation.x=Math.PI/2;
-  show_plane[1].position.y = 5;
-  show_plane[1].add (plane3);
-  show_plane[1].visible = false;
-  
-
-  show_plane[2] = new THREE.Object3D();
-  var plane4 = new THREE.Mesh(new THREE.PlaneGeometry(12,6), 
-               new THREE.MeshBasicMaterial({ color:0xff0000,
-                                             side:THREE.DoubleSide,  
-                                             transparent: true,
-                                             opacity: 0.2,
-                                             visible: true }));
-  plane4.rotation.x=Math.PI/2;
-  show_plane[2].add (plane4);
-  show_plane[2].position.y=5;
-  show_plane[2].visible = false;
-  
-  for(var i=0; i < show_plane.length; i++)
-    scene.add(show_plane[i]);
+  function buildShowPlane(index, width, height) {
+      quadcopter.show_plane[index] = new THREE.Object3D();
+      var plane = new THREE.Mesh( new THREE.PlaneGeometry(width, height), 
+                                  new THREE.MeshBasicMaterial({ color:0xff0000,
+                                                                side:THREE.DoubleSide,  
+                                                                transparent: true,
+                                                                opacity: 0.2,
+                                                                visible: true }));
+      plane.rotation.x = Math.PI/2;
+      quadcopter.show_plane[index].position.y = 5;
+      quadcopter.show_plane[index].add (plane);
+      quadcopter.show_plane[index].visible = false
+  }  
 
 }
 
@@ -658,195 +778,89 @@ function buildObstacle(){
 }
 
 
-createCatmullRomCurve3 = function (points, steps, closes, angle) {
-  // Create a smooth 3d spline curve from a series of points using the Catmull-Rom algorithm.
-  var N_step = Math.round(steps)+1 || 20;
-  var geometry = new THREE.Geometry();
-  circle_curve = new THREE.CatmullRomCurve3();
-  var rotatePoint  =  new THREE.Vector3(0, 0, 1);
-  // rotatePoint = rotatePoint.clone().normalize();
+function CreateCurve(angle, curve_type, draw_curve) {
+  var params;
+  var curve_points;
 
-  var point;
-  for (var i = 0; i < points.length; i++){
-      point = points[i];
-      circle_curve.points[i] = new THREE.Vector3(point[0], 0, point[2]);
-      circle_curve.points[i].applyAxisAngle(rotatePoint, angle);
-      circle_curve.points[i].y += 5;
+  if (curve_type == 0){
+      params = params1;
+      curve_points = [[params1.P0x, params1.P0y, params1.P0z],
+                      [params1.P1x, params1.P1y, params1.P1z],
+                      [params1.P2x, params1.P2y, params1.P2z],
+                      [params1.P3x, params1.P3y, params1.P3z],
+                      [params1.P4x, params1.P4y, params1.P4z],
+                      [params1.P5x, params1.P5y, params1.P5z],
+                      [params1.P6x, params1.P6y, params1.P6z],
+                      [params1.P7x, params1.P7y, params1.P7z]];
+  }
+  else if (curve_type == 1) {
+      params = params2;
+      curve_points = [[params2.P0x, params2.P0y, params2.P0z],
+                      [params2.P1x, params2.P1y, params2.P1z],
+                      [params2.P2x, params2.P2y, params2.P2z],
+                      [params2.P3x, params2.P3y, params2.P3z],
+                      [params2.P4x, params2.P4y, params2.P4z],
+                      [params2.P5x, params2.P5y, params2.P5z],
+                      [params2.P6x, params2.P6y, params2.P6z],
+                      [params2.P7x, params2.P7y, params2.P7z],
+                      [params2.P8x, params2.P8y, params2.P8z]];
+  }
+  else {
+    params = params3;
+    curve_points = [[params3.P0x, params3.P0y, params3.P0z],
+                    [params3.P1x, params3.P1y, params3.P1z],
+                    [params3.P2x, params3.P2y, params3.P2z],
+                    [params3.P3x, params3.P3y, params3.P3z],
+                    [params3.P4x, params3.P4y, params3.P4z],
+                    [params3.P5x, params3.P5y, params3.P5z],
+                    [params3.P6x, params3.P6y, params3.P6z],
+                    [params3.P7x, params3.P7y, params3.P7z],
+                    [params3.P8x, params3.P8y, params3.P8z],
+                    [params3.P9x, params3.P9y, params3.P9z],
+                    [params3.P10x, params3.P10y, params3.P10z],
+                    [params3.P11x, params3.P11y, params3.P11z],
+                    [params3.P12x, params3.P12y, params3.P12z],
+                    [params3.P13x, params3.P13y, params3.P13z],
+                    [params3.P14x, params3.P14y, params3.P14z],
+                    [params3.P15x, params3.P15y, params3.P15z]];
   }
   
-  circle_curve.closed=closes;
+
+  var curve = createCatmullRomCurve3(curve_points, params.steps, params.close, angle); 
+  var curveMat = new THREE.LineBasicMaterial( { color: 0x00ff00, linewidth: 30 } );
+
+  scene.remove(quadcopter.curveObject);
+  quadcopter.curveObject = new THREE.Line( curve[0], curveMat );
+
+  if (draw_curve) scene.add(quadcopter.curveObject);
   
-  var stepSize = 1 / (N_step-1);
-  for (var j = 0; j < N_step; j++) {
-      geometry.vertices.push( circle_curve.getPoint(j * stepSize) );
-  }
-  return geometry;
-};
-
-
-createCatmullRomSCurve3 = function (cpList, steps, closes, angle, plane) {
-
-  var N = Math.round(steps)+1 || 20;
-  var geometry = new THREE.Geometry();
-  Sloopcurve = new THREE.CatmullRomCurve3();
-  var cp ;
-  var rotatePoint  =  new THREE.Vector3(0, 0,1);
-  rotatePoint=rotatePoint.clone().normalize();
-  
-  for(let i=0;i<16;i++)
-  {
-  var cp = cpList[i];
-  Sloopcurve.points[i] = new THREE.Vector3(cp[0], cp[1], cp[2]);
-  Sloopcurve.points[i].applyAxisAngle(rotatePoint,angle);
-  Sloopcurve.points[i].y+=5;
-   }
-  Sloopcurve.closed=closes;
-  
-  var j, stepSize = 1/(N-1);
-  for (j = 0; j < N; j++) {
-      geometry.vertices.push( Sloopcurve.getPoint(j * stepSize) );
-  }
-  return geometry;
-};
-
-  
-createCatmullRomSlineCurve3 = function (cpList, steps, closes, angle, plane) {
-
-  var N = Math.round(steps)+1 || 20;
-  var geometry = new THREE.Geometry();
-   SlineCurve = new THREE.CatmullRomCurve3();
-  var cp = cpList[0];
-  SlineCurve.points[0] = new THREE.Vector3(cp[0], cp[1], cp[2]);
-  cp = cpList[1];
-  SlineCurve.points[1]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-  cp = cpList[2];
-  SlineCurve.points[2]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-  
-  var rotatePoint  =  new THREE.Vector3(0, 0,1);
-  rotatePoint=rotatePoint.clone().normalize();
-
-  cp = cpList[3];
-  SlineCurve.points[3]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-    cp = cpList[4];
-  SlineCurve.points[4]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-    cp = cpList[5];
-  SlineCurve.points[5]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-    cp = cpList[6];
-  SlineCurve.points[6]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-    cp = cpList[7];
-  SlineCurve.points[7]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-    cp = cpList[8];
-  SlineCurve.points[8]  = new THREE.Vector3(cp[0], cp[1], cp[2]);
-
-  SlineCurve.points[0].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[1].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[2].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[3].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[4].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[5].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[6].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[7].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[8].applyAxisAngle(rotatePoint,angle);
-  SlineCurve.points[0].y+=5
-  SlineCurve.points[1].y+=5
-  SlineCurve.points[2].y+=5
-  SlineCurve.points[3].y+=5
-  SlineCurve.points[4].y+=5
-  SlineCurve.points[5].y+=5
-  SlineCurve.points[6].y+=5
-  SlineCurve.points[7].y+=5
-  SlineCurve.points[8].y+=5
- // plane.rotateX(angle);
-  SlineCurve.closed=closes;
-  
-  var j, stepSize = 1/(N-1);
-  for (j = 0; j < N; j++) {
-      geometry.vertices.push( SlineCurve.getPoint(j * stepSize) );
-  }
-  return geometry;
-};
-
-
-function CreateSline(angle){
-  // scene.remove(curve3);
-  var controlPoints1 = [[params3.P0x, params3.P0y, params3.P0z],
-                        [params3.P1x, params3.P1y, params3.P1z],
-                        [params3.P2x, params3.P2y, params3.P2z],
-                        [params3.P3x, params3.P3y, params3.P3z],
-                        [params3.P4x, params3.P4y, params3.P4z],
-                        [params3.P5x, params3.P5y, params3.P5z],
-                        [params3.P6x, params3.P6y, params3.P6z],
-                        [params3.P7x, params3.P7y, params3.P7z],
-                        [params3.P8x, params3.P8y, params3.P8z] ];
-  var curveGeom1 = createCatmullRomSlineCurve3(controlPoints1, params3.steps,params3.close,angle);
-  
-  var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 30 } );
-  curve3 = new THREE.Line( curveGeom1, mat );
-  //scene.add(curve3);
-};
-
-
-function CreateCurve(angle) {
-  // scene.remove(curve1);
-  var circlePoints = [[params1.P0x, params1.P0y, params1.P0z],
-                        [params1.P1x, params1.P1y, params1.P1z],
-                        [params1.P2x, params1.P2y, params1.P2z],
-                        [params1.P3x, params1.P3y, params1.P3z],
-                        [params1.P4x, params1.P4y, params1.P4z],
-                        [params1.P5x, params1.P5y, params1.P5z],
-                        [params1.P6x, params1.P6y, params1.P6z],
-                        [params1.P7x, params1.P7y, params1.P7z]];
-  
-  var curveGeom = createCatmullRomCurve3(circlePoints, params1.steps, params1.close, angle); 
-  var curveMat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 30 } );
-  curve1 = new THREE.Line( curveGeom, curveMat );
-  // scene.add(curve1);
+  return curve[1]
 }
 
-function CreateSCurve(angle){
-  scene.remove(curve);
-  console.log("s")
-  var params2 = {
-          P0x: -2*RADIUS, P0y:0 ,P0z:0,
-          P1x:-0.5*RADIUS*Math.sqrt(2)-RADIUS, P1y: 0,P1z: 0.5*RADIUS*Math.sqrt(2),
-          P2x:  -RADIUS, P2y: 0,P2z: RADIUS,
-          P3x:  0.5*RADIUS*Math.sqrt(2)-RADIUS, P3y: 0,P3z:0.5*RADIUS*Math.sqrt(2),
-          P4x: 0, P4y: 0 ,P4z:0,
-          P5x: -0.5*RADIUS*Math.sqrt(2)+RADIUS, P5y: 0,P5z:-0.5*RADIUS*Math.sqrt(2),
-          P6x: RADIUS, P6y: 0,P6z: -RADIUS,   
-          P7x: 0.5*RADIUS*Math.sqrt(2)+RADIUS, P7y: 0,P7z: -0.5*RADIUS*Math.sqrt(2),      
-          P8x: 2*RADIUS , P8y:0 ,P8z:0,
-          P9x: 0.5*RADIUS*Math.sqrt(2)+RADIUS, P9y: 0,P9z: 0.5*RADIUS*Math.sqrt(2),
-          P10x: RADIUS, P10y: 0,P10z:RADIUS,
-          P11x: -0.5*RADIUS*Math.sqrt(2)+RADIUS, P11y: 0,P11z:0.5*RADIUS*Math.sqrt(2),
-          P12x: 0, P12y: 0 ,P12z:0,
-          P13x: 0.5*RADIUS*Math.sqrt(2)-RADIUS, P13y: 0,P13z:-0.5*RADIUS*Math.sqrt(2),
-          P14x: -RADIUS, P14y: 0,P14z:-RADIUS,  
-          P15x: -0.5*RADIUS*Math.sqrt(2)-RADIUS, P15y: 0,P15z:-0.5*RADIUS*Math.sqrt(2),   
-                steps: 50,close:true};        
-  var controlPoints1 = [
-                [params2.P0x, params2.P0y, params2.P0z],
-                [params2.P1x, params2.P1y, params2.P1z],
-                [params2.P2x, params2.P2y, params2.P2z],
-                [params2.P3x, params2.P3y, params2.P3z],
-                [params2.P4x, params2.P4y, params2.P4z],
-                [params2.P5x, params2.P5y, params2.P5z],
-                [params2.P6x, params2.P6y, params2.P6z],
-                [params2.P7x, params2.P7y, params2.P7z],
-                [params2.P8x, params2.P8y, params2.P8z],
-                [params2.P9x, params2.P9y, params2.P9z],
-                [params2.P10x, params2.P10y, params2.P10z],
-                [params2.P11x, params2.P11y, params2.P11z],
-                [params2.P12x, params2.P12y, params2.P12z],
-                [params2.P13x, params2.P13y, params2.P13z],
-                [params2.P14x, params2.P14y, params2.P14z],
-                [params2.P15x, params2.P15y, params2.P15z]
-      ];
-  var curveGeom1 = createCatmullRomSCurve3(controlPoints1, params1.steps,params1.close,angle);
-  
-  var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 30 } );
-  curve = new THREE.Line( curveGeom1, mat );
-  scene.add(curve);
+
+function createCatmullRomCurve3(points, steps, closes, angle) {
+    // Create a smooth 3d spline curve from a series of points using the Catmull-Rom algorithm.
+    var N_step = Math.round(steps)+1 || 20;
+    var geometry = new THREE.Geometry();
+    var rotatePoint  =  new THREE.Vector3(0, 0, 1);
+    var curve = new THREE.CatmullRomCurve3();
+
+    var point;
+    for (var i = 0; i < points.length; i++){
+        point = points[i];
+        curve.points[i] = new THREE.Vector3(point[0], point[1], point[2]);
+        curve.points[i].applyAxisAngle(rotatePoint, angle);
+        curve.points[i].y += 5;
+    }
+    
+    curve.closed = closes;
+    
+    var stepSize = 1 / (N_step - 1);
+    for (var i = 0; i < N_step; i ++) {
+        geometry.vertices.push( curve.getPoint(i * stepSize) );
+    }
+
+    return [geometry, curve];
 };
 
 
@@ -905,20 +919,18 @@ function initCannon() {
 }
 
 
-function initThree(quadcopter) {
+function initThree() {
   clock = new THREE.Clock();
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
   camera.position.z =5;
   camera.position.y =6;
 
-  spherelight = new THREE.PointLight (0xFF3030,1, 1);
-  scene.add (spherelight)
   var ambientLight = new THREE.AmbientLight(0xdddddd);
   ambientLight.intensity=0.5;
   scene.add(ambientLight);
   
-  spotLight = new THREE.SpotLight(0xffffff, 0.5);
+  var spotLight = new THREE.SpotLight(0xffffff, 0.5);
   spotLight.position.set(-10, 40, -10);
   spotLight.angle = Math.PI/12;
   spotLight.penumbra = 1
@@ -938,7 +950,10 @@ function initThree(quadcopter) {
   let controls = new THREE.OrbitControls(camera, renderer.domElement); 
   //controls.enableKeys = false;
   
+  
+  quadcopter = new Quadcopter();
+  spotLight.target = quadcopter.body;
+  
   buildScene();
   // buildObstacle();
-
 }

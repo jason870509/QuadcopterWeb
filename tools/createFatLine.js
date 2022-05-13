@@ -1,3 +1,22 @@
+var createFatLine = function (opt) {
+ 
+    opt = opt || {};
+    opt.width = opt.width || 5;
+ 
+    // LINE MATERIAL
+    var matLine = new THREE.LineMaterial({
+            linewidth: opt.width, // in pixels
+            vertexColors: THREE.VertexColors
+        });
+    matLine.resolution.set(320, 240);
+ 
+    var line = new THREE.Line2(opt.geo, matLine);
+ 
+    return line;
+ 
+};
+
+
 var createFatLineGeometry = function (opt) {
     opt = opt || {};
     opt.forPoint = opt.forPoint || function (i, per) {
