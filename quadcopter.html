@@ -74,6 +74,7 @@
     <script src="tools/Line2.js"></script>
     <script src="tools/createFatLine.js"></script>
     <script src="tools/HudButton.js"></script>
+    <script src="tools/HandleKeys.js"></script>
     <script src="tools/jquery-2.1.4.min.js"></script>
 
     <script src="drone/qcommon.js"></script>
@@ -81,13 +82,13 @@
     <script src="drone/qservo.js"></script>
     <script>
       $('#curveAngle').change ( function() {
-          angleRef1 = $(this).val();
+          quadcopter.angleRef = $(this).val();
       });
       $('#8loopAngle').change ( function() {
-          angleRef2 = $(this).val();
+          quadcopter.angleRef = $(this).val();
       });
       $('#SlineAngle').change ( function() {
-          angleRef3 = $(this).val();
+          quadcopter.angleRef = $(this).val();
       });
       $('#CameraFar').change ( function() {
           camera_far = $(this).val();
@@ -155,21 +156,17 @@
       var nowPitch = false, nowHover = false, nowRoll = false, nowYaw = false;
 
       // HUD 的 PD 控制系統參數
-      var y1, v1, speedRef = [], y2, v2, numberRef1, y3, v3, numberRef2, y4, v4, numberRef3, y5, v5, numberRef4;
-      var angleY = [0, 0, 0], anglev1, angleRef1, anglev2, angleRef2, anglev3, angleRef3;
+      var motor_speed = [0, 0, 0, 0], speedRef = [0, 0, 0, 0], motor_v = [0, 0, 0, 0];
+      var number = [0, 0, 0, 0], numberRef = [0, 0, 0, 0], number_v = [0, 0, 0, 0];
+      var cylinderY = [0, 0, 0, 0]; 
 
-
-      var dtt;
-      var omega, omega0, omega1, omega2, omega3;
+      var omega, motor_omega = [];
       var omegaGain = 1.0, omegaHover;
       const SIZE = 1;
       const PROP_KK = 0.1;
       
-
-      var cylindery1, cylindery2, cylindery3, cylindery4, SpeedChange = 2; 
-      var showdetail = false;
+      var showDetail = true;
       var circles = [];
-
 
       init();
       animate();
@@ -217,23 +214,19 @@
 
         // omegaHover: stable hover speed
         omegaHover = Math.sqrt ( body.mass * world.gravity.length()/4/PROP_KK );
+
         pickables.push( quadcopter.body.children[5],
                         quadcopter.body.children[6],
                         quadcopter.body.children[7],
                         quadcopter.body.children[8] );  
-        console.log(pickables);
+
         targetPos = new THREE.Vector3(5, 5,-5);
         quadcopter.target_position = new THREE.Vector3(5, 5,-5);
 
         quadcopter.target_point = new THREE.Mesh( new THREE.CylinderGeometry(0.05,0.05, 0.1, 20), 
                                        new THREE.MeshPhongMaterial({ visible: true }));
         scene.add(quadcopter.target_point);
-        
 
-        sy = [];
-        sy[1]=v1=y2=v2=numberRef1=speedRef[1]=sy[2]=sv2=speedRef[2]=sy[3]=sv3=speedRef[3]=sy[4]=sv4=speedRef[4]=y3=v3=numberRef2=y4=v4=numberRef3=y5=v5=numberRef4=0;
-        cylindery1=cylinderv1=cylinderRef1=cylindery2=cylinderv2=cylinderRef2=cylindery3=cylinderv3=cylinderRef3=cylindery4=cylinderv=cylinderRef4=0;
-        anglev1=angleRef1=anglev2=angleRef2=anglev3=angleRef3=0;
         // document.addEventListener('mousedown', onDocumentMouseDown, false)
 
         // =================================== Fat Line ===================================
@@ -274,7 +267,7 @@
           raycaster.setFromCamera(mouse, camera);
           var intersects = raycaster.intersectObjects( pickables );
           if(intersects.length > 0){
-            showdetail = !showdetail;
+            showDetail = !showDetail;
             console.log("2");
           }
       }
@@ -305,360 +298,136 @@
             }
           }
 
-          var f1 = speedServo(sy[1], v1, speedRef[1]); 
-          dtt = 0.005;
-          v1 += f1*dtt;
-          sy[1] += v1*dtt;
+          for(let i = 0; i < 4; i ++){
+              var f = speedServo(motor_speed[i], motor_v[i], speedRef[i]);
+              var t = 0.005;
+              motor_v[i] += f * t;
+              motor_speed[i] += motor_v[i] * t;
 
-          var f2 = numberServo(y2,v2,numberRef1); 
-          v2 += f2*dtt;
-          y2 += v2*dtt;
-          cylindery1 =y2*0.05;
-        
-          var f3 = numberServo(y3,v3,numberRef2); 
-          v3 += f3*dtt;
-          y3 += v3*dtt;
-          cylindery2 =y3*0.05;
-
-          var f4 = numberServo(y4,v4,numberRef3); 
-          v4 += f4*dtt;
-          y4 += v4*dtt;
-          cylindery3 =y4*0.05;
-
-          var f5 = numberServo(y5,v5,numberRef4); 
-          v5 += f5*dtt;
-          y5 += v5*dtt;
-          cylindery4 =y5*0.05;
-          
-          var f6= speedServo(sy[2],sv2,speedRef[2]); 
-          sv2 += f6*dtt;
-          sy[2] += sv2*dtt;
-          
-          var f7 = speedServo(sy[3],sv3,speedRef[3]); 
-          sv3 += f7*dtt;
-          sy[3] += sv3*dtt;
-          
-          var f8 = speedServo(sy[4],sv4,speedRef[4]); 
-          sv4 += f8*dtt;
-          sy[4]+= sv4*dtt;
-        
-          var f9 = speedServo(angleY[0],anglev1,angleRef1); 
-          anglev1 += f9*dtt;
-          angleY[0] += anglev1*dtt;
-
-          var f10 = speedServo(angleY[1],anglev2,angleRef2); 
-          anglev2 += f10*dtt;
-          angleY[1] += anglev2*dtt;
-
-          var f11 = speedServo(angleY[2],anglev3,angleRef3); 
-          anglev3 += f11*dtt;
-          angleY[2] += anglev3*dtt;
-
-          
+              var f2 = numberServo(number[i], number_v[i], numberRef[i]);
+              number_v[i] += f2 * t;
+              number[i] += number_v[i] * t;
+              cylinderY[i] =number[i] * 0.05;
+          }
+ 
           quadcopter.follow_line();
           
+          // not in thrust+/- mode, activate hoverServo
+          if (omegaGain === 1.0) 
+              omega = hoverServo(body, dt);
+          else
+              omega = omegaGain * omegaHover;  // this looks much better
+          omega = Math.clamp (omega, 0, 50);
+          // console.log("ryaw: "+rYaw+" "+turning);
           
-        /*if(controller&&yref==0)
-        {
-          yref=2;
-              var turning = false;
-          var rolling = false;
-          var pitching= false;
-        }
-        if(controller)
-        {
-              var turning = false;
-          var rolling = false;
-          var pitching= false;
-        }
-        if(!controller&&yref>0.5)
-        {
-          yref=0.5;
-        }
-        if(!controller&&yref==0.5)
-        {
-          //omega0=omega1=omega2=omega3=0;
-          var turning = true;
-          var rolling = true;
-          var pitching= true;
-        }*/
-        // not in thrust+/- mode, activate hoverServo
-        if (omegaGain === 1.0) 
-        omega = hoverServo(body, dt);
-        else
-        omega = omegaGain*omegaHover;  // this looks much better
-        omega = Math.clamp (omega, 0, 50);
-      // console.log("ryaw: "+rYaw+" "+turning);
+          if (! turning) {
+            //console.log("turningryaw: "+rYaw);
+            rYaw = yawServo (body, dt);
+            //console.log("servoryaw: "+rYaw);
+            rYaw = Math.clamp (rYaw, -omega, omega);
+          }  
+          // always activate rollServo and pitchServo
+          rRoll = rollServo (body, dt);
+          rRoll = Math.clamp (rRoll, -omega*0.15, omega*0.15);
+          rPitch = pitchServo (body, dt);
+          rPitch = Math.clamp (rPitch, -omega*0.15, omega*0.15);
         
-        if (! turning) {
-          //console.log("turningryaw: "+rYaw);
-          rYaw = yawServo (body, dt);
-          //console.log("servoryaw: "+rYaw);
-          rYaw = Math.clamp (rYaw, -omega, omega);
-        }  
-      // always activate rollServo and pitchServo
-        rRoll = rollServo (body, dt);
-        rRoll = Math.clamp (rRoll, -omega*0.15, omega*0.15);
-        rPitch = pitchServo (body, dt);
-        rPitch = Math.clamp (rPitch, -omega*0.15, omega*0.15);
+
+          motor_omega[0] = omega - rYaw - rRoll - rPitch;
+          motor_omega[1] = omega + rYaw - rRoll + rPitch;
+          motor_omega[2] = omega - rYaw + rRoll + rPitch;
+          motor_omega[3] = omega + rYaw + rRoll - rPitch;
+
+          if(showDetail) {
         
-        var omega0Temp = omega0;
-        var omega1Temp = omega1;
-        var omega2Temp = omega2;
-        var omega3Temp = omega3;
-        omega0 = omega - rYaw - rRoll - rPitch;
-        omega1 = omega + rYaw - rRoll + rPitch;
-        omega2 = omega - rYaw + rRoll + rPitch;
-        omega3 = omega + rYaw + rRoll - rPitch;//0x1742ab
-        if(showdetail){
-      
-        cylinderRef1=omega0*8;
-        cylinderRef2=omega1*8;
-        cylinderRef3=omega2*8;
-        cylinderRef4=omega3*8;
-        // quadcopter.body.children[13].children[0].visible=true;
-        // quadcopter.body.children[14].children[0].visible=true;
-        // quadcopter.body.children[15].children[0].visible=true;
-        // quadcopter.body.children[16].children[0].visible=true;
-        // quadcopter.body.children[25].children[0].visible=true;
-        // quadcopter.body.children[26].children[0].visible=true;
-        // quadcopter.body.children[27].children[0].visible=true;
-        // quadcopter.body.children[28].children[0].visible=true;
-      
-        quadcopter.body.children[25].children[0].scale.y = -5*cylindery1;
-        quadcopter.body.children[26].children[0].scale.y = 5*cylindery2;
-        quadcopter.body.children[27].children[0].scale.y = -5*cylindery3;
-        quadcopter.body.children[28].children[0].scale.y = 5*cylindery4;
-      /* quadcopter.body.children[13].add(new THREE.AxesHelper (0.5));
-      quadcopter.body.children[14].add(new THREE.AxesHelper (0.5));
-      quadcopter.body.children[15].add(new THREE.AxesHelper (0.5));
-      quadcopter.body.children[16].add(new THREE.AxesHelper (0.5));*/
-      }
-      else {
-        // quadcopter.body.children[13].children[0].visible=false;
-        // quadcopter.body.children[14].children[0].visible=false;
-        // quadcopter.body.children[15].children[0].visible=false;
-        // quadcopter.body.children[16].children[0].visible=false;
-        // quadcopter.body.children[25].children[0].visible=false;
-        // quadcopter.body.children[26].children[0].visible=false;
-        // quadcopter.body.children[27].children[0].visible=false;
-        // quadcopter.body.children[28].children[0].visible=false;
-      /*  quadcopter.body.children[13].remove(new THREE.AxesHelper (0.5));
-      quadcopter.body.children[14].remove(new THREE.AxesHelper (0.5));
-      quadcopter.body.children[15].remove(new THREE.AxesHelper (0.5));
-      quadcopter.body.children[16].remove(new THREE.AxesHelper (0.5));*/
-      }
-        /*omega0 = omega  - rRoll - rPitch;
-        omega1 = omega  - rRoll + rPitch;
-        omega2 = omega  + rRoll + rPitch;
-        omega3 = omega  + rRoll - rPitch;*/
-        /*omega0 = omega - rYaw;
-        omega1 = omega + rYaw;
-        omega2 = omega - rYaw;
-        omega3 = omega + rYaw;*/
-        body.torque = new CANNON.Vec3(0,0,0);
-        body.angularDamping = 0.39
-        body.linearDamping = 0.39
-        body.applyLocalForce (new CANNON.Vec3(0,PROP_KK*omega0*omega0,0), new CANNON.Vec3(-1.0*SIZE, 0, SIZE) )
-        body.applyLocalForce (new CANNON.Vec3(0,PROP_KK*omega1*omega1,0), new CANNON.Vec3(-1.0*SIZE, 0, -SIZE) )
-        body.applyLocalForce (new CANNON.Vec3(0,PROP_KK*omega2*omega2,0), new CANNON.Vec3( 1.0*SIZE, 0, -SIZE) )
-        body.applyLocalForce (new CANNON.Vec3(0,PROP_KK*omega3*omega3,0), new CANNON.Vec3( 1.0*SIZE, 0, SIZE) ) 
-          
-        let KT = 0.1;
-        // need to add the last argument
-        body.torque.vadd (new CANNON.Vec3(0, -KT*omega0*omega0,0), body.torque);
-        body.torque.vadd (new CANNON.Vec3(0,  KT*omega1*omega1,0), body.torque);
-        body.torque.vadd (new CANNON.Vec3(0, -KT*omega2*omega2,0), body.torque);
-        body.torque.vadd (new CANNON.Vec3(0,  KT*omega3*omega3,0), body.torque);
-        //bug ... for pitching, weird number from KT not zero
-        //console.log (body.torque)         
-        //console.log("omega0:"+omega0.toFixed(2)+" omega1:"+omega1.toFixed(2)+" omega2:"+omega2.toFixed(2)+" omega3:"+omega3.toFixed(2));
-        //requestAnimationFrame( animate );
-        //renderer.render( scene, camera );
-          var angle = [], t = 10;
-          for(i=0;i<4;i++){
-          angle[i] = 0
+              quadcopter.body.children[25].children[0].scale.y = -5 * cylinderY[0];
+              quadcopter.body.children[26].children[0].scale.y =  5 * cylinderY[1];
+              quadcopter.body.children[27].children[0].scale.y = -5 * cylinderY[2];
+              quadcopter.body.children[28].children[0].scale.y =  5 * cylinderY[3];
+
           }
-          angle[0] = 4.9 / 14 * omega0;
-          numberRef1=-omega0.toFixed(1);
-          HUD_object["sprite"][0].text = y2.toFixed(2);
-          angle[1] = 4.9 / 14 * omega1;
-          numberRef2=omega1.toFixed(1);
-          HUD_object["sprite"][1].text =y3.toFixed(2);
-          numberRef3=-omega2.toFixed(1);
-          angle[2] = 4.9 / 14 * omega2;
-          HUD_object["sprite"][2].text = y4.toFixed(2);
-          numberRef4=omega3.toFixed(1);;
-          angle[3] = 4.9 / 14 * omega3;
-          HUD_object["sprite"][3].text = y5.toFixed(2);
+          else {
+              quadcopter.body.children[25].children[0].visible=false;
+              quadcopter.body.children[26].children[0].visible=false;
+              quadcopter.body.children[27].children[0].visible=false;
+              quadcopter.body.children[28].children[0].visible=false;
+          }
+
+          body.torque = new CANNON.Vec3(0, 0, 0);
+          body.angularDamping = 0.39
+          body.linearDamping = 0.39
+          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[0]*motor_omega[0], 0), new CANNON.Vec3(-1.0*SIZE, 0, SIZE) )
+          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[1]*motor_omega[1], 0), new CANNON.Vec3(-1.0*SIZE, 0, -SIZE) )
+          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[2]*motor_omega[2], 0), new CANNON.Vec3( 1.0*SIZE, 0, -SIZE) )
+          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[3]*motor_omega[3], 0), new CANNON.Vec3( 1.0*SIZE, 0, SIZE) ) 
+            
+          let KT = 0.1;
+          // need to add the last argument
+          body.torque.vadd (new CANNON.Vec3(0, -KT*motor_omega[0]*motor_omega[0], 0), body.torque);
+          body.torque.vadd (new CANNON.Vec3(0,  KT*motor_omega[1]*motor_omega[1], 0), body.torque);
+          body.torque.vadd (new CANNON.Vec3(0, -KT*motor_omega[2]*motor_omega[2], 0), body.torque);
+          body.torque.vadd (new CANNON.Vec3(0,  KT*motor_omega[3]*motor_omega[3], 0), body.torque);
+          //bug ... for pitching, weird number from KT not zero
+
+
+          var pointer_angle = [0, 0, 0, 0];
+
+          numberRef[0] = -motor_omega[0].toFixed(1);
+          pointer_angle[0] = 4.9 / 14 * motor_omega[0];
+          HUD_object["sprite"][0].text = number[0].toFixed(2);
+          
+          numberRef[1] = motor_omega[1].toFixed(1);
+          pointer_angle[1] = 4.9 / 14 * motor_omega[1];    
+          HUD_object["sprite"][1].text = number[1].toFixed(2);
+
+          numberRef[2] = -motor_omega[2].toFixed(1);
+          pointer_angle[2] = 4.9 / 14 * motor_omega[2];
+          HUD_object["sprite"][2].text = number[2].toFixed(2);
+          
+          numberRef[3] = motor_omega[3].toFixed(1);;
+          pointer_angle[3] = 4.9 / 14 * motor_omega[3];
+          HUD_object["sprite"][3].text = number[3].toFixed(2);
+          
           for (i = 0; i < 4; i++) {
-          angle[i] = Math.clamp(angle[i], 0, 4.9);
-          speedRef[i+1]= -angle[i] + 0.86
-          HUD_object["pointer"][i].rotation.z = sy[i+1];
+              pointer_angle[i] = Math.clamp(pointer_angle[i], 0, 4.9);
+              speedRef[i] = -pointer_angle[i] + 0.86
+              HUD_object["pointer"][i].rotation.z = motor_speed[i];
           }
+
+          // render propeller in quadcopter.body
+          quadcopter.body.children[25].rotation.z += 2.5*motor_omega[0]*dt; // motor1
+          quadcopter.body.children[26].rotation.z -= 2.5*motor_omega[1]*dt; // motor2
+          quadcopter.body.children[27].rotation.z += 2.5*motor_omega[2]*dt; // motor3
+          quadcopter.body.children[28].rotation.z -= 2.5*motor_omega[3]*dt; // motor4
+
           render();
           handleKeys();
           HUDControler();
-        updatePhysics();
-        // render propeller in quadcopter.body
-      // console.log(quadcopter.body.children[25].children[0].mesh.parameters)
-        quadcopter.body.children[25].rotation.z += 2.5*omega0*dt;//motor1
-        quadcopter.body.children[26].rotation.z -= 2.5*omega1*dt;//motor2
-        quadcopter.body.children[27].rotation.z += 2.5*omega2*dt;//motor3
-        quadcopter.body.children[28].rotation.z -= 2.5*omega3*dt;//motor4
+          updatePhysics();
       }
-      function render(){
-        camera.lookAt(quadcopter.body.position);
-        renderer.clear(true);
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-        renderer.render(sceneHUD, cameraHUD);
+
+
+      function render() {
+          camera.lookAt(quadcopter.body.position);
+          renderer.clear(true);
+
+          requestAnimationFrame(animate);
+          renderer.render(scene, camera);
+          renderer.render(sceneHUD, cameraHUD);
       }
-      function handleKeys () {
-        keyboard.update();
-        // console.log("keyborad:",keyboard.down)
-        const RATIO = 1.0003;
-        /////////////////////////////////////////////////////////////
-        // for hovering
-        if (keyboard.pressed('up')) {
-          // controller=true;
-          $('#thrustUp').css ("background-color",  'red');
-          omegaGain *= RATIO;
-        }
-        if (keyboard.up('up')) {
-          yref = body.position.y;
-          console.log ('set yref: ' + yref);
-          omegaGain = 1;
-          $('#thrustUp').css ("background-color",  'white');
-        }
-        if (keyboard.pressed('down')) {
-          $('#thrustDo').css ("background-color",  'yellow');
-          omegaGain /= RATIO;
-        }
-        if (keyboard.up('down')) {
-          yref = body.position.y;
-          console.log ('set yref: ' + yref);
-          $('#thrustDo').css ("background-color",  'white');
-          omegaGain = 1;
-        }
-        /////////////////////////////////////////////////////////////
-        // for rolling
-        if (keyboard.pressed('D')) {
-          $('#rollRight').css ("background-color",  'yellow');
-              //rRoll = omegaHover*0.01;
-              //rolling = true;
-          rollRef = 0.1;
-        }
-        if (keyboard.up('D')) {
-          $('#rollRight').css ("background-color",  'white');
-          //rRoll = 0;//-omegaHover*0.005;
-          rollRef = 0;
-          rolling = false;  
-        }
-        if (keyboard.pressed('A')) {
-          $('#rollLeft').css ("background-color",  'yellow');
-              //rRoll = - omegaHover*0.01;
-              //rolling = true;
-              rollRef = -0.1;
-        }
-        if (keyboard.up('A')) {
-          $('#rollLeft').css ("background-color",  'white');
-          rollRef = 0;
-          rolling = false;    
-        }
-        /////////////////////////////////////////////////////////////
-        // for pitching
-        if (keyboard.pressed('W')) {
-          $('#pitchFore').css ("background-color",  'yellow');
-              //rRoll = omegaHover*0.01;
-              //rolling = true;
-          pitchRef = 0.1;
-          pitching=true;
-        }
-        if (keyboard.up('W')) {
-          $('#pitchFore').css ("background-color",  'white');
-          //rRoll = 0;//-omegaHover*0.005;
-          pitchRef = 0;
-          pitching = false; 
-        }
-        if (keyboard.pressed('S')) {
-          $('#pitchAft').css ("background-color",  'yellow');
-              //rRoll = - omegaHover*0.01;
-              //rolling = true;
-              pitchRef = -0.1;
-              pitching=true;
-        }
-        if (keyboard.up('S')) {
-          $('#pitchAft').css ("background-color",  'white');
-          pitchRef = 0;
-          pitching = false;   
-        }
-        /////////////////////////////////////////////////////////////
-        // for yawing
-          if (keyboard.pressed('left')) {
-          $('#cwTurn').css ("background-color",  'yellow');
-              rYaw = omegaHover*0.1;
-              turning = true;
-        }
-        if (keyboard.up('left')) {
-          $('#cwTurn').css ("background-color",  'white');
-              rYaw = 0;
-              turning = false;
-          
-            // set up stopping reference
-            yawRef = getBodyYaw(body);
-          if((yawRef/Math.PI*180).toFixed(2)==360)yawRef=0;
-            console.log ('set thetaRef: ' + (yawRef/Math.PI*180).toFixed(2));
-            //pidR2.setRef (Math.cos(yawRef), Math.sin(yawRef));            
-        }
-        if (keyboard.pressed('right')) {
-          $('#ccwTurn').css ("background-color",  'yellow');
-              rYaw = -omegaHover*0.1;
-              turning = true;
-        }
-        if (keyboard.up('right')) {
-          $('#ccwTurn').css ("background-color",  'white');
-          rYaw = 0;
-          turning = false;
-          // set up stopping reference
-          yawRef = getBodyYaw(body);
-          if((yawRef/Math.PI*180).toFixed(2)==360)yawRef=0;
-              //if((yawRef/Math.PI*180).toFixed(2)>0&&(yawRef/Math.PI*180).toFixed(2)<1)yawRef=0;
-            console.log ('set thetaRef: ' + (yawRef/Math.PI*180).toFixed(2));
-            console.log(turning+omegaHover);
-        }
-        if (keyboard.pressed('space')) {
-          yawRef = getBodyYaw(body);
-          rYaw=0;
-          turning=false;
-          pitchRef = 0;
-          pitching = false; 
-          rollRef = 0;
-          rolling = false;  
-          $('#stop').css ("background-color",  'yellow');
-        }
-        if (keyboard.up('space')) {
-          $('#stop').css ("background-color",  'white');
-        }
-          $('#gain').val (omegaGain);
-        $('#yreftext').val (yref.toFixed(2));
-      }
+
       function updatePhysics() {
-        var timeStep=1/48;
-        world.step(timeStep);
-        // Copy coordinates from Cannon.js to Three.js
-        quadcopter.body.position.copy(body.position);
-        quadcopter.body.quaternion.copy(body.quaternion); 
-        yawAngle = getBodyYaw(body);
-      if((yawAngle/Math.PI*180).toFixed(2)==360)yawAngle=0;
-        rollAngle = getBodyRoll(body);
-        pitchAngle = getBodyPitch(body);
-        
-      /* $('#text').html (`${omegaGain.toFixed(3)}:[ ${body.position.x.toFixed(3)}, ${body.position.y.toFixed(2)}, 
-          ${body.position.z.toFixed(3)} ] <br>      
-        [${yawRef.toFixed(3)}] : [Y: ${yawAngle.toFixed(3)} ] [R: ${rollAngle.toFixed(3)} ] [P: ${pitchAngle.toFixed(3)} ]  
-        <br>
-          [omega0:${omega0.toFixed(3)}] : [omega1: ${omega1.toFixed(3)} ] [omega2: ${omega2.toFixed(3)} ] [omega3: ${omega3.toFixed(3)} ]         `);  */
+          var timeStep=1/48;
+          world.step(timeStep);
+
+          // Copy coordinates from Cannon.js to Three.js
+          quadcopter.body.position.copy(body.position);
+          quadcopter.body.quaternion.copy(body.quaternion);
+
+          yawAngle = getBodyYaw(body);
+          if((yawAngle/Math.PI*180).toFixed(2) == 360) yawAngle=0;
+          rollAngle = getBodyRoll(body);
+          pitchAngle = getBodyPitch(body);
       }
 
     </script>

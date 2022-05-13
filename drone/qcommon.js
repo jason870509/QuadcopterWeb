@@ -279,6 +279,10 @@ class Quadcopter {
     this.showTargetPoint = false;
     this.showPlane = false;
     this.curve_first = true;
+
+    this.angleRef = 0;
+    this.angle_V = 0;
+    this.curve_angle = 0;
   }
 
   buildDrone() {
@@ -358,7 +362,6 @@ class Quadcopter {
       motorSides[3] = new THREE.Mesh(new THREE.CylinderGeometry(.40, .40, .05, 50,2, true, -0.5, 2.5), material)
       motorSides[3].position.set(.40, .10, .40)
       motorSides[3].name = "motorSides_3"
-      // pickables = [motorSides[0], motorSides[1], motorSides[2], motorSides[3]];
 
       for (i=0;i<4;i++){
           quadcopter.add(motorSides[i])
@@ -380,6 +383,8 @@ class Quadcopter {
                                                                         map: texture }));
         motorCenters2[i].castShadow = true;
         motorCenters2[i].receiveShadow = true;
+        motorCenters[i].name = "motorCenters_" + i
+        motorCenters2[i].name = "motorCenters2_" + i
         quadcopter.add(motorCenters[i], motorCenters2[i]);
       }
       motorCenters[0].position.set(-.40, 0, .40);
@@ -422,7 +427,8 @@ class Quadcopter {
                                         new THREE.MeshPhongMaterial({ color: 0x333333,
                                                                       map: texture }));
         motorLinks[i].castShadow = true;
-        motorLinks[i].receiveShadow = true; 
+        motorLinks[i].receiveShadow = true;
+        motorLinks[i].name = "motorLinks_" + i 
         quadcopter.add(motorLinks[i]);
       }
       motorLinks[0].position.set(-.60, 0, .40);
@@ -449,14 +455,15 @@ class Quadcopter {
       // 螺旋槳
       let motorTexture = loader.load('https://i.imgur.com/yCho2gY.png');
       let motors=[];
-      for(i=0;i<4;i++){
+      for(i = 0; i < 4; i ++){
           motors[i] = new THREE.Mesh( new THREE.PlaneGeometry(.75, .10), 
                                       new THREE.MeshPhongMaterial({ map:motorTexture,
                                                                     transparent: true, 
                                                                     side:THREE.DoubleSide }));
           motors[i].rotation.x = -Math.PI / 2;
           motors[i].castShadow = true;
-          motors[i].receiveShadow = true; 
+          motors[i].receiveShadow = true;
+          motors[i].name = "motors_" + i  
           quadcopter.add(motors[i]);
       }
       motors[0].position.set(-.40, .10, .40)
@@ -527,6 +534,7 @@ class Quadcopter {
                                                                     map : texture }));
       var Head2 = Head.clone()
       bodyBox.add(Head, Head2)
+      bodyBox.name = "bodyBox_" + i  
       quadcopter.add(bodyBox)
       
       Head.position.set(-15, 10, 30)
@@ -657,18 +665,19 @@ class Quadcopter {
               if (this.curve_type == 2) body.position.set(-2*RADIUS, 5, 0);
               this.curve_first = false;
           }
-
+          
+          var angle = this.computeCurveAngle(this.curve_type);
           switch(this.curve_type){
               case 0:         
-                  this.current_curve = CreateCurve(angleY[0], this.curve_type, false);
-                  this.fatline[this.curve_type].line.rotation.z = angleY[0];
+                  this.current_curve = CreateCurve(angle, this.curve_type, false);
+                  this.fatline[this.curve_type].line.rotation.z = angle;
                   break;
               case 1:
-                  this.current_curve = CreateCurve(angleY[2], this.curve_type, false);
-                  this.fatline[this.curve_type].line.rotation.z = angleY[2];
+                  this.current_curve = CreateCurve(angle, this.curve_type, false);
+                  this.fatline[this.curve_type].line.rotation.z = angle;
                   break;
               case 2: 
-                  this.current_curve = CreateCurve(angleY[1], this.curve_type, true);
+                  this.current_curve = CreateCurve(angle, this.curve_type, true);
                   break;
               default:
                   break;
@@ -677,11 +686,11 @@ class Quadcopter {
           if (this.showPlane) {
               this.show_plane[this.curve_type].visible = true;
               if (this.curve_type == 1)
-                this.show_plane[this.curve_type].rotation.z = angleY[2];
+                this.show_plane[this.curve_type].rotation.z = angle;
               else if (this.curve_type == 2)
-                this.show_plane[this.curve_type].rotation.z = angleY[1];
+                this.show_plane[this.curve_type].rotation.z = angle;
               else
-                this.show_plane[this.curve_type].rotation.z = angleY[0];
+                this.show_plane[this.curve_type].rotation.z = angle;
           }
           else {
               for(let i in this.show_plane){
@@ -705,6 +714,15 @@ class Quadcopter {
       }
   }   
 
+  computeCurveAngle(){
+      var dtt = 0.005;
+      var f = speedServo(this.curve_angle, this.angle_V, this.angleRef); 
+
+      this.angle_V += f * dtt;
+      this.curve_angle += this.angle_V * dtt;
+      
+      return this.curve_angle
+  }
 }
 
 
