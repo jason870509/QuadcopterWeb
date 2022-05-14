@@ -18,7 +18,7 @@ function hoverServo (body, dt) {  // pass dt for integral control
 	let yy = body.position.y;
 	let vv = body.velocity.y;
 
-	let error = yref - yy;
+	let error = quadcopter.yref - yy;
 	if (hoverServo.integral === undefined)
 		hoverServo.integral = 0;
 	hoverServo.integral += error*dt;
@@ -32,7 +32,7 @@ function hoverServo (body, dt) {  // pass dt for integral control
 
 
 function yawServo (body, dt) {  // pass dt for integral control
-	let error = yawRef - yawAngle;	
+	let error = quadcopter.yawRef - quadcopter.yawAngle;	
 	
 	if (yawServo.integral === undefined)
 		yawServo.integral = 0;
@@ -55,7 +55,7 @@ function yawServo (body, dt) {  // pass dt for integral control
 
 function rollServo (body, dt) {  // pass dt for integral control
 
-	let error = rollRef - rollAngle;	
+	let error = quadcopter.rollRef - quadcopter.rollAngle;	
 	
 	if (rollServo.integral === undefined)
 		rollServo.integral = 0;
@@ -77,7 +77,7 @@ function rollServo (body, dt) {  // pass dt for integral control
 
 
 function pitchServo (body, dt) {
-	let error = pitchRef - pitchAngle;	
+	let error = quadcopter.pitchRef - quadcopter.pitchAngle;	
 	
 	if (pitchServo.integral === undefined)
 		pitchServo.integral = 0;
@@ -102,7 +102,7 @@ function pitchServo (body, dt) {
 // 	  this.x = x;
 // 	  this.y = y;
 // 	  this.xref = xref;
-// 	  this.yref = yref;
+// 	  this.yref = quadcopter.yref;
 // 	  this.vx = 0;
 // 	  this.vy = 0;
 // 	  this.KP = 150; // 'spring constant'

@@ -5,18 +5,16 @@
       <meta charset="utf-8">
       <style>
           #info{
-            position:absolute;
-            top:2%;
-            width:100%;
-            font-family:"Times New Roman";
-            color:black;
-            text-align:center;
+              position:absolute;
+              top:2%;
+              width:100%;
+              font-family:"Times New Roman";
+              text-align:center;
           }
           #text{
             position:absolute;
             bottom:2%;
             width:100%;
-            color: #ffffff;
             font-family:"Times New Roman";
             text-align:center;
           }
@@ -29,41 +27,37 @@
       </style>
   </head>
   <body>
-    <div id="info">
-      <p> Up/Down to Change Hover Altitude; Left/Right to Yaw; A/D to Roll; W/S to Pitch </p>
-      <div id="Cameras" style="position:absolute;left:10px;background:white; width:28vw; height:35vh; float:left;">
-        <canvas id="mycanvas"></canvas>
-      </div>
-      <button id="thrustUp">T-Up</button>
-      <button id="thrustDo">T-Down</button>
-      <button id="cwTurn">y-Left</button>
-      <button id="ccwTurn">y-Right</button>
-      <button id="rollRight">r-PORT</button>
-      <button id="rollLeft">r-STARBOARD</button>
-      <button id="pitchFore">p-FORE</button>
-      <button id="pitchAft">p-AFT</button>
-      <button id="stop">Space-Stop</button><br>
-      <input id="yreftext" type="text" value=2><br>
-      <!-- <input id="yawtext" type="text" value=0>
-      <input type=range min=-1 max=1 step="0.05" value = 0 id='yawref'><br>
-      <button id="flyup">Take-off</button> -->
-      <button id="takeoff"font-family:"Times New Roman">Take-off</button>
-      <button id="land"font-family:"Times New Roman">Land</button><br>
-      <button id="CircleMovement"font-family:"Times New Roman">Circle-Movement</button>
-      <input type=range min=-3.14 max=3.14 step="0.05" value = 0 font-family:"Times New Roman" id='curveAngle'><br>
-      <button id="s-line"font-family:"Times New Roman">S-line</button>
-      <input type=range min=-3.14 max=3.14 step="0.05" value = 0 id='SlineAngle'font-family:"Times New Roman"><br>
-      <button id="8-loop"font-family:"Times New Roman">8-Loop</button>
-      <input type=range min=-3.14 max=3.14 step="0.05" value = 0 id='8loopAngle'font-family:"Times New Roman"><br>
-      <button id="direction"font-family:"Times New Roman">ShowDirection</button>
-      <button id="plane"font-family:"Times New Roman">ShowPlane</button><br>
-      <input type=range min=-5 max=-0.5 step="0.05" value = -2 id='CameraFar' font-family:"Times New Roman"> ChangeCamera<br>
-    </div>  
-    <div id="text"></div>
+      <div id="info">
+          <p> Up/Down to Change Hover Altitude; Left/Right to Yaw; A/D to Roll; W/S to Pitch </p>
+          <div id="Cameras" style="position:absolute;left:10px;background:white; width:28vw; height:35vh; float:left;">
+            <canvas id="mycanvas"></canvas>
+          </div>
+          <button id="thrustUp">T-Up</button>
+          <button id="thrustDo">T-Down</button>
+          <button id="cwTurn">y-Left</button>
+          <button id="ccwTurn">y-Right</button>
+          <button id="rollRight">r-PORT</button>
+          <button id="rollLeft">r-STARBOARD</button>
+          <button id="pitchFore">p-FORE</button>
+          <button id="pitchAft">p-AFT</button>
+          <button id="stop">Space-Stop</button><br>
+          <input id="yreftext" type="text" value=2><br> 
+          <button id="takeoff"font-family:"Times New Roman">Take-off</button>
+          <button id="land"font-family:"Times New Roman">Land</button><br>
+          <button id="CircleMovement"font-family:"Times New Roman">Circle-Movement</button>
+          <button id="s-line"font-family:"Times New Roman">S-line</button>
+          <button id="8-loop"font-family:"Times New Roman">8-Loop</button>
+          <input type=range min=-3.14 max=3.14 step="0.05" value = 0 font-family:"Times New Roman" id='curveAngle'><br>
+          <button id="direction"font-family:"Times New Roman">ShowDirection</button>
+          <button id="plane"font-family:"Times New Roman">ShowPlane</button><br>
+          <input type=range min=-5 max=-0.5 step="0.05" value = -2 id='CameraFar' font-family:"Times New Roman"> ChangeCamera<br>
+      </div>  
+    
     <script src="build/three.min.js"></script>
     <script src="build/OrbitControls.js"></script>
     <script src="build/cannon.js"></script>
 
+    <script src="tools/jqueryChange.js"></script>
     <script src="tools/KeyboardState.js"></script>
     <script src="tools/Gyroscope.js"></script>
     <script src="tools/test2D.js"></script>
@@ -81,355 +75,332 @@
     <script src="drone/qangles.js"></script>
     <script src="drone/qservo.js"></script>
     <script>
-      $('#curveAngle').change ( function() {
-          quadcopter.angleRef = $(this).val();
-      });
-      $('#8loopAngle').change ( function() {
-          quadcopter.angleRef = $(this).val();
-      });
-      $('#SlineAngle').change ( function() {
-          quadcopter.angleRef = $(this).val();
-      });
-      $('#CameraFar').change ( function() {
-          camera_far = $(this).val();
-      });
-
-      $('#takeoff').click(function() {
-          takeoff = !takeoff;
-      });
-      $('#land').click(function() {
-          land=!land;
-      });
-
-      $('#CircleMovement').click(function() {
-          quadcopter.curve_first = true;
-          quadcopter.curve_type = 0;
-      });
-      $('#s-line').click(function() {
-          quadcopter.curve_first = true;
-          quadcopter.curve_type = 1;
-      });
-      $('#8-loop').click(function() {
-          quadcopter.curve_first = true;
-          quadcopter.curve_type = 2;
-      });
-            
-      $('#direction').click(function() {
-          quadcopter.showTargetPoint = !quadcopter.showTargetPoint;
-      });
-      $('#plane').click(function() {
-          quadcopter.showPlane = !quadcopter.showPlane;
-      });
-
-      var isVisible = true; // motor name
-      var world, body, quadcopter; 
-      var scene, camera, renderer, keyboard;
-      var upCamera, upCamera_renderer, camera_far = -2;
-      var clock = new THREE.Clock();
-      var sceneHUD, cameraHUD;
-      var HUD_object = {
-        sprite: [],
-        pointer: [],
-        controlRange: [],
-      }
-
-      // HUD 陀螺儀
-      var handUp = 0, controlOne = 0, mousepick = false;
-      var ControlPick;
-
-      var pickables = [];
-      var mouse = new THREE.Vector2();
-      var raycaster = new THREE.Raycaster();
-      
-      // flight maneuver
-      // hovering
-      var yref = 0; 
-      var fly_toggle = false;
-      var takeoff = false, land = false;
-
-      // Roll, Yaw, Pitch
-      var turning = true, rolling = true, pitching=true;
-      var rYaw = 0, rRoll = 0, rPitch = 0;
-      var yawAngle = 0, yawRef = 0;
-      var rollAngle = 0, rollRef = 0;
-      var pitchAngle = 0, pitchRef = 0;
-      var nowPitch = false, nowHover = false, nowRoll = false, nowYaw = false;
-
-      // HUD 的 PD 控制系統參數
-      var motor_speed = [0, 0, 0, 0], speedRef = [0, 0, 0, 0], motor_v = [0, 0, 0, 0];
-      var number = [0, 0, 0, 0], numberRef = [0, 0, 0, 0], number_v = [0, 0, 0, 0];
-      var cylinderY = [0, 0, 0, 0]; 
-
-      var omega, motor_omega = [];
-      var omegaGain = 1.0, omegaHover;
-      const SIZE = 1;
-      const PROP_KK = 0.1;
-      
-      var showDetail = true;
-      var circles = [];
-
-      init();
-      animate();
-
-      function init() {
-        // =================================== Init ===================================
-        keyboard = new KeyboardState();
-        
-        initThree();
-        initCannon();
-        createDashboard(HUD_object["sprite"], HUD_object["pointer"], HUD_object["controlRange"]);
-        
-        var gyro = new THREE.Gyroscope();
-        scene.add (gyro)
-        gyro.add (camera);
-        quadcopter.body.add (gyro);
-        
-        // =================================== HUD ===================================
-        var upCamera_width = $('#Cameras').innerWidth();
-        var upCamera_height = $('#Cameras').innerHeight();
-        var upCamera_canvas = document.getElementById('mycanvas');
-        upCamera_renderer = new THREE.WebGLRenderer({
-          canvas: upCamera_canvas
+        $('#curveAngle').change ( function() {
+            quadcopter.angleRef = $(this).val();
         });
-        upCamera_renderer.setSize(upCamera_width, upCamera_height);
-        upCamera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
 
-        // Camera
-        cameraHUD = new THREE.OrthographicCamera(-20, 20, 10, -10, -10, 1000);
+        $('#CameraFar').change ( function() {
+            camera_far = $(this).val();
+        });
 
+        $('#takeoff').click(function() {
+            quadcopter.takeoff = !quadcopter.takeoff;
+        });
 
-        // =================================== 陀螺儀設定 ===================================
-        var _winDevice = !!navigator.platform.match(/Win32|Win16/);
-        console.log(_winDevice + ' ' + navigator.platform);
-        if(_winDevice){
-            document.addEventListener('mousedown', hudButtonPick, false);
-            document.addEventListener('mouseup', hudButtonUp, false);
-            document.addEventListener('mousemove', hudButtonMove, false);
-        }
-        else {
-            document.addEventListener('touchstart', hudButtonPickMobile, false);
-            document.addEventListener('touchend', hudButtonUpMobile, false);
-            document.addEventListener('touchmove', hudButtonMoveMobile, false);
-        }
+        $('#land').click(function() {
+            quadcopter.land=!quadcopter.land;
+        });
 
-        // omegaHover: stable hover speed
-        omegaHover = Math.sqrt ( body.mass * world.gravity.length()/4/PROP_KK );
+        $('#CircleMovement').click(function() {
+            quadcopter.curve_first = true;
+            quadcopter.curve_type = 0;
+        });
 
-        pickables.push( quadcopter.body.children[5],
-                        quadcopter.body.children[6],
-                        quadcopter.body.children[7],
-                        quadcopter.body.children[8] );  
+        $('#s-line').click(function() {
+            quadcopter.curve_first = true;
+            quadcopter.curve_type = 1;
+        });
 
-        targetPos = new THREE.Vector3(5, 5,-5);
-        quadcopter.target_position = new THREE.Vector3(5, 5,-5);
+        $('#8-loop').click(function() {
+            quadcopter.curve_first = true;
+            quadcopter.curve_type = 2;
+        });
+              
+        $('#direction').click(function() {
+            quadcopter.showTargetPoint = !quadcopter.showTargetPoint;
+        });
 
-        quadcopter.target_point = new THREE.Mesh( new THREE.CylinderGeometry(0.05,0.05, 0.1, 20), 
-                                       new THREE.MeshPhongMaterial({ visible: true }));
-        scene.add(quadcopter.target_point);
-
-        // document.addEventListener('mousedown', onDocumentMouseDown, false)
-
-        // =================================== Fat Line ===================================
-        quadcopter.fatline[0] = new FatLine(0);
-        quadcopter.fatline[1] = new FatLine(1);
-      }
-
-      function onWindowResize() {
-          // renderer resize
-          renderer.setSize(window.innerWidth, window.innerHeight);
-          whRatio = window.innerWidth / window.innerHeight;
-
-          // perspective camera resize
-          camera1.aspect = whRatio;
-          camera1.updateProjectionMatrix();
-          
-          // orthographic camera resize
-          halfH = 20;
-          halfW = whRatio * halfH;
-          cameraHUD.left = -halfW;
-          cameraHUD.right = halfW;
-          cameraHUD.top = halfH;
-          cameraHUD.bottom = -halfH;
-          cameraHUD.updateProjectionMatrix();
-
-          dashBoard[0].position.set(-halfW / 2.5, -(halfH - halfW / 10), 0)
-          dashBoard[1].position.set(-halfW / 8, -(halfH - halfW / 10), 0)
-          dashBoard[2].position.set(halfW / 8, -(halfH - halfW / 10), 0)
-          dashBoard[3].position.set(halfW / 2.5, -(halfH - halfW / 10), 0)
-      }
-
-
-      function onDocumentMouseDown(event) {
-          mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-          mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-          
-          // find intersections
-          raycaster.setFromCamera(mouse, camera);
-          var intersects = raycaster.intersectObjects( pickables );
-          if(intersects.length > 0){
-            showDetail = !showDetail;
-            console.log("2");
-          }
-      }
-
-
-      function animate() {
-          var dt = clock.getDelta();
-          // console.log(dt)
-          upCamera.position.copy(quadcopter.body.localToWorld(new THREE.Vector3(1, 1, camera_far)));
-          upCamera.lookAt(quadcopter.body.position);
-          upCamera_renderer.render(scene, upCamera);
+        $('#plane').click(function() {
+            quadcopter.showPlane = !quadcopter.showPlane;
+        }); 
         
-          // 起飛
-          if(takeoff) {
-            if(!fly_toggle){
-              yref = 5;
-              fly_toggle = true;
-              takeoff = false;
-            }
-          }
-          
-          // 降落
-          if(land) {
-            if(fly_toggle){
-              yref = 0;
-              fly_toggle = false;
-              land = false;
-            }
-          }
+        var isVisible = true; // motor name
+        var world, body, quadcopter; 
+        var scene, camera, renderer, keyboard;
+        var upCamera, upCamera_renderer, camera_far = -2;
+        var clock = new THREE.Clock();
 
-          for(let i = 0; i < 4; i ++){
-              var f = speedServo(motor_speed[i], motor_v[i], speedRef[i]);
-              var t = 0.005;
-              motor_v[i] += f * t;
-              motor_speed[i] += motor_v[i] * t;
+        // HUD
+        var hud;
 
-              var f2 = numberServo(number[i], number_v[i], numberRef[i]);
-              number_v[i] += f2 * t;
-              number[i] += number_v[i] * t;
-              cylinderY[i] =number[i] * 0.05;
-          }
- 
-          quadcopter.follow_line();
-          
-          // not in thrust+/- mode, activate hoverServo
-          if (omegaGain === 1.0) 
-              omega = hoverServo(body, dt);
-          else
-              omega = omegaGain * omegaHover;  // this looks much better
-          omega = Math.clamp (omega, 0, 50);
-          // console.log("ryaw: "+rYaw+" "+turning);
-          
-          if (! turning) {
-            //console.log("turningryaw: "+rYaw);
-            rYaw = yawServo (body, dt);
-            //console.log("servoryaw: "+rYaw);
-            rYaw = Math.clamp (rYaw, -omega, omega);
-          }  
-          // always activate rollServo and pitchServo
-          rRoll = rollServo (body, dt);
-          rRoll = Math.clamp (rRoll, -omega*0.15, omega*0.15);
-          rPitch = pitchServo (body, dt);
-          rPitch = Math.clamp (rPitch, -omega*0.15, omega*0.15);
+        var pickables = [];
+        var mouse = new THREE.Vector2();
+        var raycaster = new THREE.Raycaster();
+
+        // HUD 的 PD 控制系統參數
+        var motor_speed = [0, 0, 0, 0], speedRef = [0, 0, 0, 0], motor_v = [0, 0, 0, 0];
+        var number = [0, 0, 0, 0], numberRef = [0, 0, 0, 0], number_v = [0, 0, 0, 0];
+        var cylinderY = [0, 0, 0, 0]; 
+
+        var hover_omega, omega, motor_omega = [];
+        var omegaGain = 1.0, omegaHover;
+        const SIZE = 1;
+        const PROP_KK = 0.1;
         
+        var showDetail = true;
+        var circles = [];
 
-          motor_omega[0] = omega - rYaw - rRoll - rPitch;
-          motor_omega[1] = omega + rYaw - rRoll + rPitch;
-          motor_omega[2] = omega - rYaw + rRoll + rPitch;
-          motor_omega[3] = omega + rYaw + rRoll - rPitch;
+        init();
+        animate();
 
-          if(showDetail) {
-        
-              quadcopter.body.children[25].children[0].scale.y = -5 * cylinderY[0];
-              quadcopter.body.children[26].children[0].scale.y =  5 * cylinderY[1];
-              quadcopter.body.children[27].children[0].scale.y = -5 * cylinderY[2];
-              quadcopter.body.children[28].children[0].scale.y =  5 * cylinderY[3];
+        function init() {
+          // =================================== Init ===================================
+          keyboard = new KeyboardState();
+          // HUD
+          hud = new HUD();
+          initThree();
+          initCannon();
+          
+          var gyro = new THREE.Gyroscope();
+          scene.add (gyro)
+          gyro.add (camera);
+          quadcopter.body.add (gyro);
+          
+          // =================================== HUD ===================================
+          var upCamera_width = $('#Cameras').innerWidth();
+          var upCamera_height = $('#Cameras').innerHeight();
+          var upCamera_canvas = document.getElementById('mycanvas');
+          upCamera_renderer = new THREE.WebGLRenderer({
+            canvas: upCamera_canvas
+          });
+          upCamera_renderer.setSize(upCamera_width, upCamera_height);
+          upCamera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+          
 
+
+          hud.buildScene();
+          hud.buildDashboard();
+          hud.buildControlButton();
+
+          // =================================== 陀螺儀設定 ===================================
+          var _winDevice = !!navigator.platform.match(/Win32|Win16/);
+          console.log(_winDevice + ' ' + navigator.platform);
+          if(_winDevice){
+              document.addEventListener('mousedown', hudButtonPick, false);
+              document.addEventListener('mouseup', hudButtonUp, false);
+              document.addEventListener('mousemove', hudButtonMove, false);
           }
           else {
-              quadcopter.body.children[25].children[0].visible=false;
-              quadcopter.body.children[26].children[0].visible=false;
-              quadcopter.body.children[27].children[0].visible=false;
-              quadcopter.body.children[28].children[0].visible=false;
+              document.addEventListener('touchstart', hudButtonPickMobile, false);
+              document.addEventListener('touchend', hudButtonUpMobile, false);
+              document.addEventListener('touchmove', hudButtonMoveMobile, false);
           }
 
-          body.torque = new CANNON.Vec3(0, 0, 0);
-          body.angularDamping = 0.39
-          body.linearDamping = 0.39
-          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[0]*motor_omega[0], 0), new CANNON.Vec3(-1.0*SIZE, 0, SIZE) )
-          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[1]*motor_omega[1], 0), new CANNON.Vec3(-1.0*SIZE, 0, -SIZE) )
-          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[2]*motor_omega[2], 0), new CANNON.Vec3( 1.0*SIZE, 0, -SIZE) )
-          body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[3]*motor_omega[3], 0), new CANNON.Vec3( 1.0*SIZE, 0, SIZE) ) 
+          // omegaHover: stable hover speed
+          omegaHover = Math.sqrt ( body.mass * world.gravity.length()/4/PROP_KK );
+
+          pickables.push( quadcopter.body.children[5],
+                          quadcopter.body.children[6],
+                          quadcopter.body.children[7],
+                          quadcopter.body.children[8] );  
+
+          targetPos = new THREE.Vector3(5, 5,-5);
+          quadcopter.target_position = new THREE.Vector3(5, 5,-5);
+
+          quadcopter.target_point = new THREE.Mesh( new THREE.CylinderGeometry(0.05,0.05, 0.1, 20), 
+                                        new THREE.MeshPhongMaterial({ visible: true }));
+          scene.add(quadcopter.target_point);
+
+          // document.addEventListener('mousedown', onDocumentMouseDown, false)
+
+          // =================================== Fat Line ===================================
+          quadcopter.fatline[0] = new FatLine(0);
+          quadcopter.fatline[1] = new FatLine(1);
+        }
+
+        function onWindowResize() {
+            // renderer resize
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            // perspective camera resize
+            camera1.aspect = hud.whRatio;
+            camera1.updateProjectionMatrix();
             
-          let KT = 0.1;
-          // need to add the last argument
-          body.torque.vadd (new CANNON.Vec3(0, -KT*motor_omega[0]*motor_omega[0], 0), body.torque);
-          body.torque.vadd (new CANNON.Vec3(0,  KT*motor_omega[1]*motor_omega[1], 0), body.torque);
-          body.torque.vadd (new CANNON.Vec3(0, -KT*motor_omega[2]*motor_omega[2], 0), body.torque);
-          body.torque.vadd (new CANNON.Vec3(0,  KT*motor_omega[3]*motor_omega[3], 0), body.torque);
-          //bug ... for pitching, weird number from KT not zero
+            // orthographic camera resize
+            hud.halfH = 20;
+            hud.halfW = hud.whRatio * hud.halfH;
+            hud.camera.left = -hud.halfW;
+            hud.camera.right = hud.halfW;
+            hud.camera.top = hud.halfH;
+            hud.camera.bottom = -hud.halfH;
+            hud.camera.updateProjectionMatrix();
+
+            dashBoard[0].position.set(-hud.halfW / 2.5, -(hud.halfH - hud.halfW / 10), 0)
+            dashBoard[1].position.set(-hud.halfW / 8, -(hud.halfH - hud.halfW / 10), 0)
+            dashBoard[2].position.set(hud.halfW / 8, -(hud.halfH - hud.halfW / 10), 0)
+            dashBoard[3].position.set(hud.halfW / 2.5, -(hud.halfH - hud.halfW / 10), 0)
+        }
 
 
-          var pointer_angle = [0, 0, 0, 0];
+        function onDocumentMouseDown(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            // find intersections
+            raycaster.setFromCamera(mouse, camera);
+            var intersects = raycaster.intersectObjects( pickables );
+            if(intersects.length > 0){
+              showDetail = !showDetail;
+              console.log("2");
+            }
+        }
 
-          numberRef[0] = -motor_omega[0].toFixed(1);
-          pointer_angle[0] = 4.9 / 14 * motor_omega[0];
-          HUD_object["sprite"][0].text = number[0].toFixed(2);
+
+        function animate() {
+            var dt = clock.getDelta();
+            // console.log(dt)
+            upCamera.position.copy(quadcopter.body.localToWorld(new THREE.Vector3(1, 1, camera_far)));
+            upCamera.lookAt(quadcopter.body.position);
+            upCamera_renderer.render(scene, upCamera);
           
-          numberRef[1] = motor_omega[1].toFixed(1);
-          pointer_angle[1] = 4.9 / 14 * motor_omega[1];    
-          HUD_object["sprite"][1].text = number[1].toFixed(2);
+            // 起飛
+            if(quadcopter.takeoff) {
+              if(!quadcopter.fly_toggle){
+                quadcopter.yref = 5;
+                quadcopter.fly_toggle = true;
+                quadcopter.takeoff = false;
+              }
+            }
+            
+            // 降落
+            if(quadcopter.land) {
+              if(quadcopter.fly_toggle){
+                quadcopter.yref = 0;
+                quadcopter.fly_toggle = false;
+                quadcopter.land = false;
+              }
+            }
 
-          numberRef[2] = -motor_omega[2].toFixed(1);
-          pointer_angle[2] = 4.9 / 14 * motor_omega[2];
-          HUD_object["sprite"][2].text = number[2].toFixed(2);
+            for(let i = 0; i < 4; i ++){
+                var f = speedServo(motor_speed[i], motor_v[i], speedRef[i]);
+                var t = 0.005;
+                motor_v[i] += f * t;
+                motor_speed[i] += motor_v[i] * t;
+
+                var f2 = numberServo(number[i], number_v[i], numberRef[i]);
+                number_v[i] += f2 * t;
+                number[i] += number_v[i] * t;
+                cylinderY[i] =number[i] * 0.05;
+            }
+  
+            quadcopter.follow_line();
+            
+            // not in thrust+/- mode, activate hoverServo
+            if (omegaGain === 1.0) 
+                omega = hoverServo(body, dt);
+            else
+                omega = omegaGain * omegaHover;  // this looks much better
+            omega = Math.clamp (omega, 0, 50);
+            
+            if (! quadcopter.turning) {
+              quadcopter.rYaw = yawServo (body, dt);
+              quadcopter.rYaw = Math.clamp (quadcopter.rYaw, -omega*0.15, omega*0.15);
+            }  
+
+            // always activate rollServo and pitchServo
+            quadcopter.rRoll = rollServo (body, dt);
+            quadcopter.rRoll = Math.clamp (quadcopter.rRoll, -omega*0.15, omega*0.15);
+            quadcopter.rPitch = pitchServo (body, dt);
+            quadcopter.rPitch = Math.clamp (quadcopter.rPitch, -omega*0.15, omega*0.15);
           
-          numberRef[3] = motor_omega[3].toFixed(1);;
-          pointer_angle[3] = 4.9 / 14 * motor_omega[3];
-          HUD_object["sprite"][3].text = number[3].toFixed(2);
+
+            motor_omega[0] = omega - quadcopter.rYaw - quadcopter.rRoll - quadcopter.rPitch;
+            motor_omega[1] = omega + quadcopter.rYaw - quadcopter.rRoll + quadcopter.rPitch;
+            motor_omega[2] = omega - quadcopter.rYaw + quadcopter.rRoll + quadcopter.rPitch;
+            motor_omega[3] = omega + quadcopter.rYaw + quadcopter.rRoll - quadcopter.rPitch;
+
+            if(showDetail) {
           
-          for (i = 0; i < 4; i++) {
-              pointer_angle[i] = Math.clamp(pointer_angle[i], 0, 4.9);
-              speedRef[i] = -pointer_angle[i] + 0.86
-              HUD_object["pointer"][i].rotation.z = motor_speed[i];
-          }
+                quadcopter.body.children[25].children[0].scale.y = -5 * cylinderY[0];
+                quadcopter.body.children[26].children[0].scale.y =  5 * cylinderY[1];
+                quadcopter.body.children[27].children[0].scale.y = -5 * cylinderY[2];
+                quadcopter.body.children[28].children[0].scale.y =  5 * cylinderY[3];
 
-          // render propeller in quadcopter.body
-          quadcopter.body.children[25].rotation.z += 2.5*motor_omega[0]*dt; // motor1
-          quadcopter.body.children[26].rotation.z -= 2.5*motor_omega[1]*dt; // motor2
-          quadcopter.body.children[27].rotation.z += 2.5*motor_omega[2]*dt; // motor3
-          quadcopter.body.children[28].rotation.z -= 2.5*motor_omega[3]*dt; // motor4
+            }
+            else {
+                quadcopter.body.children[25].children[0].visible = false;
+                quadcopter.body.children[26].children[0].visible = false;
+                quadcopter.body.children[27].children[0].visible = false;
+                quadcopter.body.children[28].children[0].visible = false;
+            }
 
-          render();
-          handleKeys();
-          HUDControler();
-          updatePhysics();
-      }
+            body.torque = new CANNON.Vec3(0, 0, 0);
+            body.angularDamping = 0.39
+            body.linearDamping = 0.39
+            body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[0]*motor_omega[0], 0), new CANNON.Vec3(-1.0*SIZE, 0, SIZE) )
+            body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[1]*motor_omega[1], 0), new CANNON.Vec3(-1.0*SIZE, 0, -SIZE) )
+            body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[2]*motor_omega[2], 0), new CANNON.Vec3( 1.0*SIZE, 0, -SIZE) )
+            body.applyLocalForce (new CANNON.Vec3(0, PROP_KK*motor_omega[3]*motor_omega[3], 0), new CANNON.Vec3( 1.0*SIZE, 0, SIZE) ) 
+              
+            let KT = 0.1;
+            // need to add the last argument
+            body.torque.vadd (new CANNON.Vec3(0, -KT*motor_omega[0]*motor_omega[0], 0), body.torque);
+            body.torque.vadd (new CANNON.Vec3(0,  KT*motor_omega[1]*motor_omega[1], 0), body.torque);
+            body.torque.vadd (new CANNON.Vec3(0, -KT*motor_omega[2]*motor_omega[2], 0), body.torque);
+            body.torque.vadd (new CANNON.Vec3(0,  KT*motor_omega[3]*motor_omega[3], 0), body.torque);
+            //bug ... for pitching, weird number from KT not zero
 
 
-      function render() {
-          camera.lookAt(quadcopter.body.position);
-          renderer.clear(true);
+            var pointer_angle = [0, 0, 0, 0];
 
-          requestAnimationFrame(animate);
-          renderer.render(scene, camera);
-          renderer.render(sceneHUD, cameraHUD);
-      }
+            numberRef[0] = -motor_omega[0].toFixed(1);
+            pointer_angle[0] = 4.9 / 14 * motor_omega[0];
+            hud.sprite[0].text = number[0].toFixed(2);
+            
+            numberRef[1] = motor_omega[1].toFixed(1);
+            pointer_angle[1] = 4.9 / 14 * motor_omega[1];    
+            hud.sprite[1].text = number[1].toFixed(2);
 
-      function updatePhysics() {
-          var timeStep=1/48;
-          world.step(timeStep);
+            numberRef[2] = -motor_omega[2].toFixed(1);
+            pointer_angle[2] = 4.9 / 14 * motor_omega[2];
+            hud.sprite[2].text = number[2].toFixed(2);
+            
+            numberRef[3] = motor_omega[3].toFixed(1);;
+            pointer_angle[3] = 4.9 / 14 * motor_omega[3];
+            hud.sprite[3].text = number[3].toFixed(2);
+            
+            for (i = 0; i < 4; i++) {
+                pointer_angle[i] = Math.clamp(pointer_angle[i], 0, 4.9);
+                speedRef[i] = -pointer_angle[i] + 0.86
+                hud.pointer[i].rotation.z = motor_speed[i];
+            }
 
-          // Copy coordinates from Cannon.js to Three.js
-          quadcopter.body.position.copy(body.position);
-          quadcopter.body.quaternion.copy(body.quaternion);
+            // render propeller in quadcopter.body
+            quadcopter.body.children[25].rotation.z += 2.5*motor_omega[0]*dt; // motor1
+            quadcopter.body.children[26].rotation.z -= 2.5*motor_omega[1]*dt; // motor2
+            quadcopter.body.children[27].rotation.z += 2.5*motor_omega[2]*dt; // motor3
+            quadcopter.body.children[28].rotation.z -= 2.5*motor_omega[3]*dt; // motor4
 
-          yawAngle = getBodyYaw(body);
-          if((yawAngle/Math.PI*180).toFixed(2) == 360) yawAngle=0;
-          rollAngle = getBodyRoll(body);
-          pitchAngle = getBodyPitch(body);
-      }
+            render();
+            handleKeys();
+            HUDControler();
+            updatePhysics();
+        }
 
-    </script>
+
+        function render() {
+            camera.lookAt(quadcopter.body.position);
+            renderer.clear(true);
+
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+            renderer.render(hud.scene, hud.camera);
+        }
+
+        function updatePhysics() {
+            var timeStep=1/48;
+            world.step(timeStep);
+
+            // Copy coordinates from Cannon.js to Three.js
+            quadcopter.body.position.copy(body.position);
+            quadcopter.body.quaternion.copy(body.quaternion);
+
+            quadcopter.yawAngle = getBodyYaw(body);
+            if((quadcopter.yawAngle / Math.PI*180).toFixed(2) == 360) quadcopter.yawAngle = 0;
+            quadcopter.rollAngle = getBodyRoll(body);
+            quadcopter.pitchAngle = getBodyPitch(body);
+        }
+
+      </script>
   </body>
 </html>
