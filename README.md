@@ -1,3 +1,3 @@
 # QuadcopterWeb
 
-## This is my college thesis.
+## This is my college project.
