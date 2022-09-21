@@ -17,7 +17,7 @@ git clone https://github.com/jason870509/QuadcopterWeb.git
 
 * yaw, row and pitch 
 
-![Imgur](https://i.imgur.com/dWEc12A.gifv)
+![Imgur](https://i.imgur.com/dWEc12A.gif)
 
 * follow the line
 
