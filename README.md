@@ -10,7 +10,7 @@
 # Installation
 
 ```
-pip install
+git clone https://github.com/jason870509/QuadcopterWeb.git
 ```
 
 # Demo
