@@ -1,4 +1,4 @@
-# QuadcopterWeb
+# Quadcopter Simulator
 
 ## This is my college project.
 
