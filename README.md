@@ -21,4 +21,4 @@ git clone https://github.com/jason870509/QuadcopterWeb.git
 
 * follow the line
 
-![image](https://github.com/jason870509/QuadcopterWeb/blob/master/others/images/yaw%2C%20row%20and%20pitch.gif)
+![image](https://github.com/jason870509/QuadcopterWeb/blob/master/others/images/follow%20the%20line.gif)
