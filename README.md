@@ -7,6 +7,11 @@
 
 [Quadcopter展示網頁連結](https://jason870509.github.io/QuadcopterWeb/quadcopter.html "link")
 
+# Installation
+
+```
+pip install
+```
 
 # Demo
 
