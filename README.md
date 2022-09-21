@@ -26,5 +26,5 @@ git clone https://github.com/jason870509/QuadcopterWeb.git
 
 # AR
 
-* [AR Github網址](https://github.com/jason870509/QuadcopterAR "link")
-* [AR 展示網址](https://jason870509.github.io/QuadcopterAR/AR_copter_final.html "link") (Need Camera)
+* [AR Github Website](https://github.com/jason870509/QuadcopterAR "link")
+* [AR Demo Website](https://jason870509.github.io/QuadcopterAR/AR_copter_final.html "link") (Need Camera)
