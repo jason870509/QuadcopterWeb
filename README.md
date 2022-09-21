@@ -3,7 +3,7 @@
 ## This is my college project.
 
 1. 在 Web 介面展示並模擬真實世界中四軸無人機的移動模式，可自由地在 3D 空間中飛行，並且加入多種循線設計。  
-2. 將設計好的四軸無人機加入AR介面，使用 AR.js 的 marker 標記位置，模擬 AI 送貨的情況。  
+2. 將設計好的四軸無人機加入 AR 介面，使用 AR.js 的 marker 標記位置，模擬 AI 送貨的情況。  
 3. 可支援電腦和手機。
 
 [Quadcopter 展示網頁連結](https://jason870509.github.io/QuadcopterWeb/quadcopter.html "link")
